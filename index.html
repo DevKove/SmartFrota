@@ -53,7 +53,7 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px #21a0a01c,0 5px 14p
 body{background:#f1f6fc;color:#102b50}
 .login-wrap{grid-template-columns:minmax(280px,1fr) minmax(340px,390px);gap:clamp(20px,4vw,56px);padding:clamp(20px,4vw,64px);background:linear-gradient(90deg,rgba(2,18,40,.93),rgba(3,29,59,.78) 42%,rgba(3,34,65,.15)),url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=2000&q=85') center/cover no-repeat;min-height:100vh}
 .brand-panel{min-height:0;max-width:620px;padding:clamp(18px,3vw,38px);border:0;border-left:4px solid #087fe8;border-radius:0 18px 18px 0;background:linear-gradient(100deg,#031a36e8,#052b4e85);backdrop-filter:blur(8px)}
-.brand-panel .brand-mark{width:342px;height:342px;border-radius:0;background:transparent;border:0;box-shadow:none}
+.brand-panel .brand-mark{width:342px;height:342px;border-radius:0;background:transparent;border:0;box-shadow:none;overflow:visible;transform:none}.brand-panel .brand-mark img{width:100%;height:100%;object-fit:contain;filter:none}
 .brand-panel .brand-kicker{margin-top:18px!important;color:#78caff;letter-spacing:3px}
 .brand-panel h1{font-size:clamp(40px,5vw,64px);margin:8px 0 12px;letter-spacing:-2px}
 .brand-panel p{font-size:17px;max-width:440px;color:#d5eaff}
@@ -92,7 +92,7 @@ input,select,textarea{border-radius:7px;border-color:#d2dfed}
 button{border-radius:8px}
 .toast{background:#061f3e}
 @media(max-width:900px){.login-wrap{grid-template-columns:1fr;background-position:center;padding:18px;gap:14px}.brand-panel{max-width:none;padding:20px;border-left-width:3px}.brand-panel h1{font-size:40px}.login-card{margin:0 auto 14px;width:min(100%,480px)}.shell{grid-template-columns:1fr}.sidebar{padding:14px}.topbar{padding:12px 15px}.content{padding:15px}}
-@media(max-width:480px){.brand-panel .brand-mark{width:260px;height:260px;border-radius:0;background:transparent;border:0;box-shadow:none}.brand-mark svg{width:236px;height:236px}.brand-panel h1{font-size:35px}.brand-panel p{font-size:15px}.brand-features{margin-top:12px}.login-card{padding:22px}.topbar h2{font-size:17px}}
+@media(max-width:480px){.brand-panel .brand-mark{width:260px;height:260px;border-radius:0;background:transparent;border:0;box-shadow:none;overflow:visible;transform:none}.brand-mark svg{width:236px;height:236px}.brand-panel h1{font-size:35px}.brand-panel p{font-size:15px}.brand-features{margin-top:12px}.login-card{padding:22px}.topbar h2{font-size:17px}}
 
 
 .filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px;align-items:end}
@@ -110,7 +110,7 @@ button{border-radius:8px}
 </head>
 <body>
 <section id="loginView" class="login-wrap">
-  <div class="brand-panel"><div class="brand-mark"><img src="https://images.openai.com/static-rsc-4/foDYJd6eYdTmfIpyQ0NYY7MQIk79KDJyuCqqrg7PuvRLj6qP4O__vzH9bFuvjdPY49nZ8BKrFOXLwzGmgW3HljH6LVdONTISUonQ1ggqnbvl30qL_ntRVezcMEeZAnavIExnl3klAiRl8pEezK466totA4aoROyvzH2XokFT9f0?purpose=inline" alt="Logomarca SmartFrota: brasão com caminhão e seta de crescimento"></div><div class="brand-kicker" style="margin-top:30px">Gestão pública inteligente</div><h1>Smart<span style="color:#35b5ff">Frota</span></h1><p>Frota bem gerida, cidade mais forte. Mais controle, eficiência e transparência para a sua frota.</p><div class="brand-features"><span class="brand-feature">◈ Gestão de veículos</span><span class="brand-feature">⚙ Manutenção</span><span class="brand-feature">▤ Controle de custos</span><span class="brand-feature">✓ Segurança</span></div><p style="font-size:13px;color:#c2def5;margin-top:28px">Mais controle. Mais eficiência. Mais resultado para o serviço público.</p></div>
+  <div class="brand-panel"><div class="brand-mark"><img src="assets/smartfrota-logo.svg" alt="Logomarca SmartFrota: brasão com caminhão e seta de crescimento"></div><div class="brand-kicker" style="margin-top:30px">Gestão pública inteligente</div><h1>Smart<span style="color:#35b5ff">Frota</span></h1><p>Frota bem gerida, cidade mais forte. Mais controle, eficiência e transparência para a sua frota.</p><div class="brand-features"><span class="brand-feature">◈ Gestão de veículos</span><span class="brand-feature">⚙ Manutenção</span><span class="brand-feature">▤ Controle de custos</span><span class="brand-feature">✓ Segurança</span></div><p style="font-size:13px;color:#c2def5;margin-top:28px">Mais controle. Mais eficiência. Mais resultado para o serviço público.</p></div>
   <form id="loginForm" class="login-card"><div class="eyebrow">Bem-vindo de volta</div><h2>Acesse sua conta</h2><p class="muted">Entre com as credenciais fornecidas pelo administrador do sistema.</p>
   <label for="email">E-mail institucional</label><input id="email" type="email" autocomplete="username" required maxlength="254" placeholder="nome@prefeitura.gov.br">
   <label for="password">Senha</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="Sua senha" aria-describedby="passwordToggle"><button id="passwordToggle" class="password-toggle" type="button" aria-label="Revelar senha" aria-pressed="false">Mostrar</button></div>
@@ -118,7 +118,7 @@ button{border-radius:8px}
   </form>
 </section>
 <section id="appView" class="shell hidden">
-<aside id="sidebar" class="sidebar"><div class="sidebrand"><span class="sidebrand-mark" aria-hidden="true"><img src="https://images.openai.com/static-rsc-4/foDYJd6eYdTmfIpyQ0NYY7MQIk79KDJyuCqqrg7PuvRLj6qP4O__vzH9bFuvjdPY49nZ8BKrFOXLwzGmgW3HljH6LVdONTISUonQ1ggqnbvl30qL_ntRVezcMEeZAnavIExnl3klAiRl8pEezK466totA4aoROyvzH2XokFT9f0?purpose=inline" alt="" aria-hidden="true"></span><span>Smart<span style="color:#35b5ff">Frota</span><small>GESTÃO PÚBLICA</small></span></div><nav class="nav" id="nav">
+<aside id="sidebar" class="sidebar"><div class="sidebrand"><span class="sidebrand-mark" aria-hidden="true"><img src="assets/smartfrota-logo.svg" alt="" aria-hidden="true"></span><span>Smart<span style="color:#35b5ff">Frota</span><small>GESTÃO PÚBLICA</small></span></div><nav class="nav" id="nav">
 <button class="active" data-page="dashboard">▦ &nbsp; Visão geral</button>
 <button data-page="vehicles">▣ &nbsp; Veículos e frota</button><button data-page="secretarias">▤ &nbsp; Secretarias</button><button data-page="drivers">♙ &nbsp; Condutores</button>
 <section class="nav-group" data-nav-group="operacao">
