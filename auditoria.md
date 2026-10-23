@@ -4,7 +4,7 @@
 **Repositório:** https://github.com/DevKove/SmartFrota  
 **Branch:** main  
 **Escopo:** frontend, service worker, Edge Function ativa e metadados do banco Supabase.  
-**Status:** auditoria parcial baseada em evidências; testes E2E completos ainda bloqueados. Correções aditivas de esquema e API foram aplicadas, mas a execução real dos endpoints após a implantação ainda precisa ser confirmada.
+**Status:** auditoria parcial baseada em evidências. A API versão 18 passou no smoke test real de autenticação sem sessão; testes E2E autenticados completos ainda estão pendentes.
 
 ## 1. Resumo executivo
 
@@ -66,11 +66,11 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 12. Aplicada migração aditiva 20261023201201_align_api_resource_columns. A consulta posterior confirmou deleted_at/updated_at/created_at nos recursos que a API espera; não foram apagados registros.
 13. Edge Function atualizada para versão 16; foram adicionadas rotas de consulta somente leitura para financial_transactions, inventory_movements e vehicle_documents, com checagem de permissão e filtro por secretaria/veículos autorizados.
 14. Após identificar caminhos que poderiam deixar uma conta parcialmente criada se a atribuição de perfil ou secretaria falhasse, foi implementada limpeza compensatória da conta Auth, perfil, perfis e vínculos antes de retornar erro. A função foi implantada como versão 17.
-15. O código-fonte da função e as migrações foram sincronizados no GitHub. A versão 18 está ativa e seu código corresponde ao arquivo versionado; os logs consultados entre 20:40 e 20:45 UTC ainda não registravam requisições após o deploy, então o runtime pós-deploy não foi confirmado por logs. O ambiente de execução desta sessão não conseguiu resolver DNS para chamar o endpoint diretamente.
-17. Adicionado `scripts/smoke-api.mjs`, que testa na CI se a Edge Function responde e nega corretamente uma consulta sem sessão; o workflow `Validate SmartFrota` foi atualizado para executar esse smoke test após a validação estática. A execução correspondente ainda estava em andamento na última consulta.
-16. Revalidação estática anterior: 23 de 23 verificações passaram; os três blocos JavaScript inline e o service worker não apresentaram erros de sintaxe; as 11 tabelas esperadas têm deleted_at. Os runs 22 e 23 passaram após a correção de logout e o teste de regressão estático. Isso não substitui testes E2E.
+15. O código-fonte da função e as migrações foram sincronizados no GitHub. A versão 18 está ativa e seu código corresponde ao arquivo versionado. O smoke test executado pelo GitHub Actions confirmou que `GET /v1/vehicles` sem sessão retorna HTTP 401 e `missing_bearer_token`; os logs do Supabase registraram duas requisições à versão 18, às 20:41:25 e 20:41:30 UTC, ambas HTTP 401 esperado.
+17. Adicionado `scripts/smoke-api.mjs` e incorporado ao workflow `Validate SmartFrota`. O run 25 passou, incluindo a etapa `Smoke test Supabase Edge Function authentication`.
+16. Revalidação estática anterior: 23 de 23 verificações passaram; os três blocos JavaScript inline e o service worker não apresentaram erros de sintaxe; as 11 tabelas esperadas têm deleted_at. Os runs 22–25 passaram após a correção de logout e a adição do smoke test. Isso não substitui testes E2E.
 
-**Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede, portanto o script não foi executado localmente neste ambiente. Entretanto, o GitHub Actions foi consultado: os runs 20, 21, 22, 23 e 24 concluíram com sucesso, incluindo a validação JavaScript e a criação do smoke test de API. O run 25, que executa o smoke test ao vivo, ainda estava em andamento na última consulta (https://github.com/DevKove/SmartFrota/actions/runs/40021131934). A execução bem-sucedida do smoke test ao vivo ainda precisa ser confirmada. Isso não substitui testes E2E no navegador nem valida CRUD/autorização real.
+**Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede, portanto o script não foi executado localmente neste ambiente. Entretanto, o GitHub Actions foi consultado: o run 25 concluiu com sucesso e executou tanto `node scripts/validate-inline-js.mjs` quanto `node scripts/smoke-api.mjs`. O log registra: `Smoke test aprovado: Edge Function respondeu e negou corretamente uma consulta sem sessão.` (https://github.com/DevKove/SmartFrota/actions/runs/40021131934). Os logs Supabase confirmam duas requisições HTTP 401 esperadas na versão 18. Isso não substitui testes E2E autenticados nem valida CRUD/autorização por secretaria.
 
 ## 5. Defeito encontrado e correção aplicada
 
@@ -80,7 +80,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Evidência:** logs da versão 15 registraram HTTP 500 em contratos, inspeções, ordens de serviço, abastecimentos, ocorrências, planos de manutenção e orçamento. A consulta ao esquema confirmou ausência de deleted_at em budget_sheets, contracts, fuel_records, incidents, inspections, inventory_products, maintenance_plans, work_orders, financial_transactions e inventory_movements; também faltavam updated_at em fuel_records, inspections, financial_transactions e inventory_movements, além de created_at em inventory_movements.
 - **Correção:** migração aditiva aplicada; a verificação posterior confirmou os campos esperados sem apagar registros. A Edge Function foi implantada inicialmente como versão 16 e depois atualizada para versão 17, incluindo limpeza compensatória na criação de usuários; a versão 16 passou a reconhecer financial_transactions, inventory_movements e vehicle_documents como recursos somente de leitura, com autorização e escopo por secretaria/veículos.
 - **Evidência de implantação:** migração registrada como 20261023201201 / align_api_resource_columns; versão ativa da função confirmada como 18.
-- **Status:** esquema e implantação confirmados. A consulta histórica da versão 15 mostrou 176 respostas 200, 21 respostas 500 e 9 respostas 404. Após a implantação da versão 18, a consulta de logs de 20:40–20:45 UTC não encontrou requisições; o teste direto do endpoint falhou por indisponibilidade de DNS no ambiente desta sessão. Foi adicionado smoke test automático à CI para validar a resposta 401 `missing_bearer_token` sem usar credenciais; execução ainda pendente na última consulta.
+- **Status:** correção de esquema aplicada. Os logs históricos da versão 15 mostraram 176 respostas 200, 21 respostas 500 e 9 respostas 404. A versão 18 foi exercitada pelo smoke test do GitHub Actions e retornou HTTP 401 com `missing_bearer_token` para chamada sem sessão, como esperado; os logs do Supabase confirmam as duas requisições. A resposta protegida autenticada e o CRUD ainda não foram testados.
 
 ### SF-UI-001 — Itens de menu visíveis para perfis sem permissão
 
@@ -108,7 +108,7 @@ O advisor de Auth recomenda habilitar a proteção contra senhas vazadas. Não a
 ### SF-AUTH-001 — Logout sem revogação da sessão no servidor
 - **Severidade:** P2.
 - **Correção aplicada:** a rota `/v1/auth/logout` agora chama `admin.auth.admin.signOut(token, "local")`, para revogar a sessão atual sem encerrar sessões em outros dispositivos. A Edge Function versão 18 foi publicada e o código ativo corresponde ao arquivo versionado no GitHub.
-- **Limite:** o access token JWT atual pode continuar válido até expirar; a revogação impede a continuidade da sessão via refresh token. A verificação de comportamento real continua pendente do smoke test/runtime.
+- **Limite:** o access token JWT atual pode continuar válido até expirar; a revogação impede a continuidade da sessão via refresh token. O smoke test da API passou, mas não exercitou o endpoint de logout com token válido; a revogação precisa de teste E2E autenticado.
 
 ### P2 — Índices e desempenho
 Os 37 avisos de FKs sem índice e 28 índices não utilizados exigem revisão individual. **Não remover nem criar índices em lote com base apenas no advisor**: os índices aparentemente não utilizados podem ser necessários após período maior ou para consultas raras; medir planos de execução e carga primeiro.
@@ -121,8 +121,8 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 
 ## 7. Próximas etapas obrigatórias
 
-1. GitHub Actions passou nos runs 20–24. O run 25 foi configurado para executar o smoke test de API ao vivo e ainda estava em andamento na última consulta: https://github.com/DevKove/SmartFrota/actions/runs/40021131934.
-2. Confirmar o resultado do smoke test ao vivo da Edge Function versão 18; depois validar com sessão real as listas operacionais e as três rotas adicionais.
+1. GitHub Actions run 25 passou, incluindo validação estática e smoke test ao vivo: https://github.com/DevKove/SmartFrota/actions/runs/40021131934.
+2. Com o smoke test da versão 18 aprovado, validar com sessão real as listas operacionais e as três rotas adicionais.
 3. Executar os principais fluxos em navegador: login válido/inválido, restauração de sessão, logout, troca de senha, cada perfil e navegação por menu.
 4. Criar usuários fictícios em ambiente isolado para validar permissões e isolamento entre secretarias.
 5. Testar CRUD positivo/negativo de cada recurso, validações, conflitos de versão, persistência após recarregar e respostas 4xx/5xx.
@@ -135,4 +135,4 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 
 ## 8. Conclusão
 
-O trabalho executado corrigiu a visibilidade do menu, aplicou a migração de compatibilidade, implantou a API versão 18 com rotas adicionais, limpeza compensatória de cadastro e revogação local de sessão no logout. A auditoria **não está concluída**: autenticação real, CRUD completo, isolamento entre secretarias, runtime pós-deploy, publicação no navegador, recuperação de backup e fluxos operacionais ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
+O trabalho executado corrigiu a visibilidade do menu, aplicou a migração de compatibilidade, implantou a API versão 18 com rotas adicionais, limpeza compensatória de cadastro e revogação local de sessão no logout. O smoke test real da API passou. A auditoria **não está concluída**: login válido, logout com token, CRUD completo, isolamento entre secretarias, navegação visual, PWA offline e restauração de backup ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
