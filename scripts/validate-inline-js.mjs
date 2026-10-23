@@ -31,8 +31,14 @@ for (const required of [
   '/v1/auth/change-password',
   'frotagov-cache-user-',
   'if(error?.status)throw error',
+  'function applyNavigationPermissions()',
+  'function canAccessPage(page)',
+  'if(!canAccessPage(page))',
 ]) {
   if (!html.includes(required)) throw new Error(`Verificação obrigatória ausente: ${required}`);
 }
+if (/style=["'][^"']*display:block!important;visibility:visible!important/.test(html)) {
+  throw new Error('Foi encontrado estilo que força item do menu a ficar visível para todos os perfis.');
+}
 
-console.log(`Validação concluída: ${inlineScripts.length} scripts inline e service-worker.js sem erros de sintaxe.`);
+console.log(`Validação concluída: ${inlineScripts.length} scripts inline, service-worker.js e verificações de permissões sem erros.`);
