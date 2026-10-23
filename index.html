@@ -487,6 +487,33 @@ th{color:#243f5a;background:#e5eef8}
 <div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
 <main id="pageContent" class="content"></main></div></section>
 <div id="toast" class="toast hidden" role="status"></div>
+<div id="pwaInstallHint" role="status" aria-live="polite"></div>
+<button id="pwaInstallButton" type="button" aria-label="Instalar SmartFrota">
+<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Instalar aplicativo</span>
+</button>
+<script>
+(function(){
+ const button=document.getElementById('pwaInstallButton');
+ const hint=document.getElementById('pwaInstallHint');
+ if(!button||!hint)return;
+ let installPrompt=null;
+ const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ const showHint=message=>{hint.textContent=message;hint.classList.add('show');};
+ const hideHint=()=>hint.classList.remove('show');
+ const updateButton=()=>{if(isStandalone()){button.style.display='none';hideHint();return;}button.style.display='inline-flex';button.hidden=false;};
+ button.addEventListener('click',async()=>{
+  if(installPrompt){installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;if(choice?.outcome==='accepted'){button.style.display='none';hideHint();}return;}
+  showHint(/iphone|ipad|ipod/i.test(navigator.userAgent)?'Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.':'Para instalar, use o menu do navegador e escolha “Instalar aplicativo” ou “Criar atalho”.');
+ });
+ window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateButton();});
+ window.addEventListener('appinstalled',()=>{button.style.display='none';hideHint();});
+ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
+ }
+ updateButton();
+})();
+</script>
+
 <script>
 (() => {
 'use strict';
@@ -658,49 +685,7 @@ async function renderList(key){
    const section=ev.target.closest('[data-section-export]');
    if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'frotagov-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
    const all=ev.target.closest('[data-workspace-export]');if(!all)return;
-   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script>
-<div id="pwaInstallHint" role="status" aria-live="polite"></div>
-<button id="pwaInstallButton" type="button" aria-label="Instalar SmartFrota">
-<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Instalar aplicativo</span>
-</button>
-<script>
-(function(){
- const button=document.getElementById('pwaInstallButton');
- const hint=document.getElementById('pwaInstallHint');
- if(!button||!hint)return;
- let installPrompt=null;
- const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
- const showHint=message=>{hint.textContent=message;hint.classList.add('show');};
- const hideHint=()=>hint.classList.remove('show');
- const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
- const updateButton=()=>{
-   if(isStandalone()){button.hidden=true;button.style.display='none';hideHint();return}
-   if(installPrompt){button.hidden=false;button.style.display='inline-flex';return}
-   if(isIOS){button.hidden=false;button.style.display='inline-flex';return}
-   button.hidden=true;button.style.display='none';
- };
- window.addEventListener('beforeinstallprompt',event=>{
-   event.preventDefault();installPrompt=event;updateButton();
- });
- window.addEventListener('appinstalled',()=>{
-   installPrompt=null;updateButton();showHint('SmartFrota foi instalado neste dispositivo.');setTimeout(hideHint,5000);
- });
- button.addEventListener('click',async()=>{
-   if(installPrompt){
-     const promptEvent=installPrompt;installPrompt=null;
-     try{await promptEvent.prompt();await promptEvent.userChoice;}catch(_){}
-     updateButton();return;
-   }
-   if(isIOS)showHint('Para instalar no iPhone/iPad: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.');
- });
- if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
- }
- updateButton();
-})();
-<\/script>
-
-</body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
+   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
    const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
    if(!flat.length){message.textContent='Não há registros para exportar.';return}
    if(all.dataset.workspaceExport==='json'){exportRows(flat,'json','frotagov-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10));message.textContent='Arquivo JSON preparado.';return}
