@@ -49,6 +49,8 @@ for (const required of [
   'if (cfg.readOnly && method !== "GET")',
   'key === "vehicle_documents"',
   'if (!token) return fail(401, "missing_bearer_token"',
+  'async function rollbackNewUser(userId: string)',
+  'await rollbackNewUser(created.user.id)',
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
