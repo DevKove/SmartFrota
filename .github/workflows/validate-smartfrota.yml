@@ -18,3 +18,5 @@ jobs:
           node-version: 22
       - name: Validate frontend JavaScript
         run: node scripts/validate-inline-js.mjs
+      - name: Smoke test Supabase Edge Function authentication
+        run: node scripts/smoke-api.mjs
