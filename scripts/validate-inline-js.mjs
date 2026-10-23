@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync('index.html', 'utf8');
 const worker = readFileSync('service-worker.js', 'utf8');
+const api = readFileSync('supabase/functions/frotagov-api/index.ts', 'utf8');
+const migration = readFileSync('supabase/migrations/20261023201201_align_api_resource_columns.sql', 'utf8');
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((match) => match[1]);
 
 if (inlineScripts.length === 0) throw new Error('Nenhum script inline foi encontrado em index.html.');
@@ -40,5 +42,23 @@ for (const required of [
 if (/style=["'][^"']*display:block!important;visibility:visible!important/.test(html)) {
   throw new Error('Foi encontrado estilo que força item do menu a ficar visível para todos os perfis.');
 }
+for (const required of [
+  'financial_transactions: { table:',
+  'inventory_movements: { table:',
+  'vehicle_documents: { table:',
+  'if (cfg.readOnly && method !== "GET")',
+  'key === "vehicle_documents"',
+  'if (!token) return fail(401, "missing_bearer_token"',
+]) {
+  if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
+}
+for (const table of [
+  'budget_sheets', 'contracts', 'fuel_records', 'incidents', 'inspections',
+  'inventory_products', 'maintenance_plans', 'work_orders',
+  'financial_transactions', 'inventory_movements',
+]) {
+  const line = new RegExp('ALTER TABLE public\\\\.' + table + ' ADD COLUMN IF NOT EXISTS deleted_at');
+  if (!line.test(migration)) throw new Error(`Migração sem deleted_at para: ${table}`);
+}
 
-console.log(`Validação concluída: ${inlineScripts.length} scripts inline, service-worker.js e verificações de permissões sem erros.`);
+console.log(`Validação concluída: ${inlineScripts.length} scripts inline, service-worker.js, autorização da API e migração de compatibilidade.`);
