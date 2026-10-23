@@ -378,7 +378,7 @@ th{color:#243f5a;background:#e5eef8}
 .secretaria-detail-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 20px 20px}
 @media(max-width:520px){.secretaria-cards{grid-template-columns:1fr}.secretaria-detail-head{padding:18px;align-items:flex-start}}
 
-</style>
+.secretaria-workspace{background:#f7faff;border:1px solid #dce8f5;border-radius:18px;overflow:hidden}.secretaria-workspace-head{padding:22px;background:linear-gradient(125deg,#fff,#eef5ff);border-bottom:1px solid #dce8f5}.secretaria-workspace-back{margin-bottom:18px}.secretaria-workspace-title{display:flex;align-items:center;gap:16px}.secretaria-workspace-title h2{margin:2px 0;font-size:clamp(22px,3vw,32px)}.secretaria-workspace-title p{margin:4px 0;color:var(--muted)}.secretaria-export-all{margin-top:20px}.secretaria-workspace-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;padding:18px}.secretaria-workspace-metric{background:#fff;border:1px solid #dce8f5;border-radius:13px;padding:15px;display:grid;gap:4px}.secretaria-workspace-metric>span{font-size:21px}.secretaria-workspace-metric small{color:var(--muted)}.secretaria-workspace-metric strong{font-size:25px;color:var(--navy)}.secretaria-workspace-sections{display:grid;gap:15px;padding:0 18px 18px}.secretaria-workspace-section{min-width:0;background:#fff;border:1px solid #dce8f5;border-radius:14px;padding:16px}.secretaria-workspace-section .panel-head{align-items:flex-start;flex-wrap:wrap}.secretaria-workspace-section h3{font-size:16px}.secretaria-workspace-section h3 small{color:var(--muted);font-weight:500}.secretaria-workspace-section .table-wrap{max-height:360px;overflow:auto}.secretaria-workspace-section th{position:sticky;top:0;background:#f6f9fd}.secretaria-workspace #secretariaWorkspaceMessage{padding:0 20px 18px;margin:0}@media(max-width:600px){.secretaria-workspace-head{padding:16px}.secretaria-export-all button{flex:1}.secretaria-workspace-section{padding:12px}.secretaria-workspace-metrics{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.secretaria-workspace-sections{padding:0 12px 12px}}\n</style>
 </head>
 <body>
 <section id="loginView" class="login-wrap">
@@ -529,6 +529,70 @@ async function renderList(key){
   let hash=0;for(const ch of String(item.sigla||item.nome||'S'))hash=(hash*31+ch.charCodeAt(0))>>>0;
   return{color:palette[hash%palette.length][0],bg:palette[hash%palette.length][1],icon:palette[hash%palette.length][2]};
  }
+ function secretariaWorkspace(item){
+  const root=$('listContent'),visual=secretariaVisual(item);
+  const groups=[
+   {key:'vehicles',title:'Veículos',icon:'🚘',fields:[['fleet_number','Nº frota'],['plate','Placa'],['make','Marca'],['model','Modelo'],['model_year','Ano'],['status','Situação'],['current_odometer_km','Odômetro']]},
+   {key:'work_orders',title:'Pedidos e ordens de serviço',icon:'🧾',fields:[['order_number','Nº ordem'],['title','Título'],['priority','Prioridade'],['status','Situação'],['estimated_cost','Custo estimado'],['actual_cost','Custo final'],['created_at','Criado em'],['completed_at','Concluído em']]},
+   {key:'maintenance_plans',title:'Planos e histórico de manutenção',icon:'🔧',fields:[['title','Plano'],['description','Descrição'],['interval_days','Intervalo (dias)'],['interval_km','Intervalo (km)'],['next_due_on','Próxima data'],['active','Ativo']]},
+   {key:'fuel_records',title:'Abastecimentos e combustível',icon:'⛽',fields:[['occurred_at','Data'],['vehicle_id','Veículo (ID)'],['fuel_type','Combustível'],['liters','Litros'],['unit_price','Preço unitário'],['total_amount','Valor total'],['odometer_km','Odômetro']]},
+   {key:'inspections',title:'Inspeções e vistorias',icon:'🔍',fields:[['inspected_at','Data'],['vehicle_id','Veículo (ID)'],['odometer_km','Odômetro'],['result','Resultado'],['notes','Observações']]},
+   {key:'incidents',title:'Ocorrências e sinistros',icon:'⚠️',fields:[['occurred_at','Data'],['vehicle_id','Veículo (ID)'],['incident_type','Tipo'],['severity','Gravidade'],['status','Situação'],['description','Descrição']]},
+   {key:'contracts',title:'Contratos e fornecedores',icon:'📑',fields:[['contract_number','Nº contrato'],['title','Objeto'],['supplier_id','Fornecedor (ID)'],['starts_on','Início'],['ends_on','Término'],['total_value','Valor'],['status','Situação']]},
+   {key:'budget_sheets',title:'Fichas orçamentárias',icon:'💰',fields:[['code','Código'],['description','Descrição'],['fiscal_year','Exercício'],['initial_amount','Valor inicial'],['status','Situação']]},
+   {key:'financial_transactions',title:'Movimentações financeiras',icon:'📊',fields:[['occurred_on','Data'],['transaction_type','Tipo'],['description','Descrição'],['amount','Valor'],['reference','Referência'],['status','Situação']]},
+   {key:'inventory_movements',title:'Movimentações de estoque e peças',icon:'📦',fields:[['occurred_at','Data'],['product_id','Produto (ID)'],['movement_type','Movimento'],['quantity','Quantidade'],['unit_cost','Custo unitário'],['work_order_id','Ordem vinculada'],['reason','Motivo']]},
+   {key:'drivers',title:'Condutores vinculados',icon:'🧑‍✈️',fields:[['full_name','Nome'],['employee_number','Matrícula'],['phone','Telefone'],['status','Situação']]},
+   {key:'vehicle_documents',title:'Documentos dos veículos',icon:'📎',fields:[['vehicle_id','Veículo (ID)'],['document_type','Tipo'],['document_number','Número'],['issued_on','Emissão'],['expires_on','Validade'],['storage_key','Arquivo']]}
+  ];
+  const esc=escapeHtml;
+  root.innerHTML='<article class="secretaria-workspace" style="--dept:'+visual.color+'"><header class="secretaria-workspace-head"><button type="button" class="secondary secretaria-workspace-back">← Todas as secretarias</button><div class="secretaria-workspace-title"><span class="secretaria-card-icon">'+visual.icon+'</span><div><div class="eyebrow">Painel da unidade administrativa</div><h2>'+esc(item.nome||'Secretaria')+'</h2><p>'+esc(item.sigla||'')+' · '+esc(item.responsavel_nome||'Responsável não informado')+'</p></div></div><div class="actions secretaria-export-all"><button type="button" data-workspace-export="csv">Exportar tudo · CSV</button><button type="button" data-workspace-export="json">Exportar tudo · JSON</button><button type="button" data-workspace-export="xlsx">Exportar tudo · Excel</button><button type="button" class="secondary" data-workspace-export="print">Imprimir / PDF</button></div></header><div class="secretaria-workspace-metrics" id="secretariaWorkspaceMetrics"><div class="empty">Carregando dados da secretaria…</div></div><div class="secretaria-workspace-sections" id="secretariaWorkspaceSections"></div><p class="muted" id="secretariaWorkspaceMessage" role="status"></p></article>';
+  const message=root.querySelector('#secretariaWorkspaceMessage');
+  const renderRows=(g,rows)=>{
+   const cells=rows.map(row=>'<tr>'+g.fields.map(([k])=>'<td>'+esc(row[k]===null||row[k]===undefined?'—':typeof row[k]==='object'?JSON.stringify(row[k]):String(row[k]))+'</td>').join('')+'</tr>');
+   return rows.length?'<div class="table-wrap"><table><thead><tr>'+g.fields.map(([,label])=>'<th>'+esc(label)+'</th>').join('')+'</tr></thead><tbody>'+cells.join('')+'</tbody></table></div>':'<div class="empty">Nenhum registro encontrado para esta secretaria.</div>';
+  };
+  const exportRows=(rows,format,filename,headers)=>{
+   if(format==='json'){const blob=new Blob([JSON.stringify(rows,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename+'.json';a.click();URL.revokeObjectURL(url);return}
+   if(format==='xlsx'){const cols=headers||Object.keys(rows[0]||{});const data=[cols,...rows.map(r=>cols.map(k=>r[k]??''))];const tsv=data.map(row=>row.map(v=>String(v??'').replace(/[\\t\\r\\n]+/g,' ')).join('\\t')).join('\\r\\n');const blob=new Blob(['\\ufeff'+tsv],{type:'application/vnd.ms-excel;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename+'.xls';a.click();URL.revokeObjectURL(url);return}
+   const cols=headers||Object.keys(rows[0]||{});downloadCsv(filename+'.csv',[cols,...rows.map(r=>cols.map(k=>r[k]??''))]);
+  };
+  let dataset={};
+  const vehicleKeys=new Set();
+  const collect=async()=>{
+   const results=await Promise.all(groups.map(async g=>{try{const data=await load('/v1/'+g.key,g.key);return[g.key,Array.isArray(data)?data:[]]}catch{return[g.key,[]]}}));
+   const all=Object.fromEntries(results);
+   (all.vehicles||[]).filter(x=>String(x.secretaria_id)===String(item.id)).forEach(x=>vehicleKeys.add(String(x.id)));
+   dataset={};
+   groups.forEach(g=>{
+    const rows=all[g.key]||[];
+    dataset[g.key]=rows.filter(x=>{
+     if(String(x.secretaria_id||'')===String(item.id))return true;
+     if(g.key==='vehicles'||g.key==='drivers'||g.key==='budget_sheets'||g.key==='contracts'||g.key==='financial_transactions'||g.key==='inventory_movements'||g.key==='work_orders'||g.key==='maintenance_plans'||g.key==='fuel_records'||g.key==='inspections'||g.key==='incidents')return false;
+     return vehicleKeys.has(String(x.vehicle_id||''));
+    });
+    if(['vehicle_documents'].includes(g.key))dataset[g.key]=rows.filter(x=>vehicleKeys.has(String(x.vehicle_id||'')));
+    if(['work_orders','maintenance_plans','fuel_records','inspections','incidents'].includes(g.key))dataset[g.key]=rows.filter(x=>String(x.secretaria_id||'')===String(item.id)||vehicleKeys.has(String(x.vehicle_id||'')));
+   });
+   const totalVehicles=(dataset.vehicles||[]).length;
+   root.querySelector('#secretariaWorkspaceMetrics').innerHTML=[['Veículos',totalVehicles,'🚘'],['Ordens / pedidos',(dataset.work_orders||[]).length,'🧾'],['Planos de manutenção',(dataset.maintenance_plans||[]).length,'🔧'],['Abastecimentos',(dataset.fuel_records||[]).length,'⛽'],['Inspeções',(dataset.inspections||[]).length,'🔍'],['Ocorrências',(dataset.incidents||[]).length,'⚠️']].map(([label,count,icon])=>'<div class="secretaria-workspace-metric"><span>'+icon+'</span><small>'+label+'</small><strong>'+count+'</strong></div>').join('');
+   root.querySelector('#secretariaWorkspaceSections').innerHTML=groups.map(g=>{const rows=dataset[g.key]||[];return '<section class="secretaria-workspace-section"><div class="panel-head"><h3>'+g.icon+' '+g.title+' <small>('+rows.length+')</small></h3><div class="actions"><button type="button" class="secondary" data-section-export="'+g.key+'" data-format="csv">CSV</button><button type="button" class="secondary" data-section-export="'+g.key+'" data-format="json">JSON</button><button type="button" class="secondary" data-section-export="'+g.key+'" data-format="xlsx">Excel</button></div></div>'+renderRows(g,rows)+'</section>'}).join('');
+   message.textContent='Dados carregados conforme os registros disponíveis e autorizados para sua sessão. Exporte cada seção ou o conjunto completo.';
+  };
+  root.onclick=async ev=>{
+   if(ev.target.closest('.secretaria-workspace-back')){renderList('secretarias');return}
+   const section=ev.target.closest('[data-section-export]');
+   if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'frotagov-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
+   const all=ev.target.closest('[data-workspace-export]');if(!all)return;
+   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
+   const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
+   if(!flat.length){message.textContent='Não há registros para exportar.';return}
+   if(all.dataset.workspaceExport==='json'){exportRows(flat,'json','frotagov-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10));message.textContent='Arquivo JSON preparado.';return}
+   const headers=[...new Set(flat.flatMap(Object.keys))];
+   exportRows(flat,all.dataset.workspaceExport,'frotagov-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10),headers);message.textContent='Relatório completo preparado para download.';
+  };
+  collect().catch(()=>{message.textContent='Não foi possível carregar os dados da secretaria. Confira a conexão e tente novamente.'});
+ }
  function secretariaDetails(item){
   const visual=secretariaVisual(item),admin=state.profile?.roles?.includes('system_admin');
   const labels={id:'Identificador',nome:'Nome da secretaria',sigla:'Sigla',status:'Situação',responsavel_nome:'Responsável',responsavel_cargo:'Cargo do responsável',telefone_institucional:'Telefone institucional',email_institucional:'E-mail institucional',centro_custo:'Centro de custo',codigo_orcamentario:'Código orçamentário',descricao:'Descrição',created_at:'Data de cadastro',updated_at:'Última atualização',secretaria_id:'Secretaria vinculada'};
@@ -553,7 +617,7 @@ async function renderList(key){
  const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);allRows=Array.isArray(rows)?rows:[];setupFilters();draw()}catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>';$('filterCount').textContent='Não foi possível carregar os registros.'}};
  $('refreshBtn').onclick=run;
  $('newBtn').onclick=()=>showCreateForm(key);
- $('listContent').addEventListener('click',e=>{const card=e.target.closest('[data-secretaria-id]');if(card&&key==='secretarias'){const item=allRows.find(x=>String(x.id)===card.dataset.secretariaId);if(item)secretariaDetails(item);return}if(e.target.closest('.secretaria-back')){draw();return}const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');const item=allRows.find(x=>String(x.id)===btn.dataset.id);if(item)showEditSecretaria(item,run)});
+ $('listContent').addEventListener('click',e=>{const card=e.target.closest('[data-secretaria-id]');if(card&&key==='secretarias'){const item=allRows.find(x=>String(x.id)===card.dataset.secretariaId);if(item)secretariaWorkspace(item);return}if(e.target.closest('.secretaria-back')){draw();return}const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');const item=allRows.find(x=>String(x.id)===btn.dataset.id);if(item)showEditSecretaria(item,run)});
  $('applyFilters').onclick=draw;
  $('clearFilters').onclick=()=>{['filterSearch','filterValue','filterStatus','filterDateFrom','filterDateTo','filterField'].forEach(id=>$(id).value='');document.querySelectorAll('#filterContext input,#filterContext select').forEach(el=>el.value='');draw()};
  $('filterGrid').addEventListener('input',e=>{if(e.target.matches('input'))draw()});
