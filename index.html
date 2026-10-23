@@ -689,9 +689,9 @@ function applyNavigationPermissions(){
   if(visible)group.style.removeProperty('display');else group.style.setProperty('display','none','important');
  });
 }
-const cacheKey=key=>'smartfrota-cache-user-'+(state.user?.id||'anonymous')+'-'+key;
-function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('smartfrota-cache-'))localStorage.removeItem(key)}}catch{}}
-function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('smartfrota-cache-')&&!key.startsWith('smartfrota-cache-user-'))localStorage.removeItem(key)}}catch{}}
+const cacheKey=key=>'frotagov-cache-user-'+(state.user?.id||'anonymous')+'-'+key;
+function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-'))localStorage.removeItem(key)}}catch{}}
+function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-')&&!key.startsWith('frotagov-cache-user-'))localStorage.removeItem(key)}}catch{}}
 clearLegacyCache();
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),4200)}
 function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
