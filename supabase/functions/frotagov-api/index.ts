@@ -74,6 +74,18 @@ async function getProfile(token: string): Promise<Profile | null> {
 function bearer(req: Request) { return req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? ""; }
 function allowed(profile: Profile, permission: string) { return profile.isAdmin || profile.permissions.includes(permission); }
 function inScope(profile: Profile, record: any) { return profile.isAdmin || (Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id)); }
+
+// Compensating cleanup prevents orphaned Auth/profile/role rows if account setup fails midway.
+async function rollbackNewUser(userId: string) {
+  const scopeDelete = await admin.from("user_secretarias").delete().eq("user_id", userId);
+  if (scopeDelete.error) console.error("user creation rollback failed", { step: "user_secretarias", code: scopeDelete.error.code });
+  const roleDelete = await admin.from("user_roles").delete().eq("user_id", userId);
+  if (roleDelete.error) console.error("user creation rollback failed", { step: "user_roles", code: roleDelete.error.code });
+  const profileDelete = await admin.from("users").delete().eq("id", userId);
+  if (profileDelete.error) console.error("user creation rollback failed", { step: "users", code: profileDelete.error.code });
+  const authDelete = await admin.auth.admin.deleteUser(userId);
+  if (authDelete.error) console.error("user creation rollback failed", { step: "auth", code: authDelete.error.code });
+}
 function cleanFields(body: Record<string, unknown>, fields: string[]) {
   const out: Record<string, unknown> = {};
   for (const key of fields) if (Object.prototype.hasOwnProperty.call(body, key)) out[key] = body[key];
@@ -171,15 +183,15 @@ Deno.serve(async (req: Request) => {
         const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: temporary_password, email_confirm: true, user_metadata: { display_name } });
         if (createError || !created.user) return fail(400, "user_create_failed", createError?.message ?? "Não foi possível criar a conta.");
         const { error: insertError } = await admin.from("users").insert({ id: created.user.id, email, display_name, password_hash: "SUPABASE_AUTH_ONLY:" + crypto.randomUUID(), is_active: true, must_change_password: true, created_by: profile.id });
-        if (insertError) { await admin.auth.admin.deleteUser(created.user.id); return fail(400, "user_profile_create_failed", insertError.message); }
+        if (insertError) { await rollbackNewUser(created.user.id); return fail(400, "user_profile_create_failed", "Não foi possível criar o perfil da conta; a criação foi desfeita."); }
         const { data: roleRows } = await admin.from("roles").select("id,code").in("code", role_codes);
-        if (!roleRows || roleRows.length !== new Set(role_codes).size) { await admin.from("users").delete().eq("id", created.user.id); await admin.auth.admin.deleteUser(created.user.id); return fail(400, "invalid_role", "Um ou mais perfis não existem."); }
+        if (!roleRows || roleRows.length !== new Set(role_codes).size) { await rollbackNewUser(created.user.id); return fail(400, "invalid_role", "Um ou mais perfis não existem; a criação da conta foi desfeita."); }
         const links = roleRows.map((r: any) => ({ user_id: created.user.id, role_id: r.id }));
         const { error: roleError } = await admin.from("user_roles").insert(links);
-        if (roleError) return fail(500, "role_assignment_failed", "Conta criada, mas não foi possível atribuir o perfil. Contate o administrador.");
+        if (roleError) { await rollbackNewUser(created.user.id); return fail(500, "role_assignment_failed", "Não foi possível atribuir o perfil; a criação da conta foi desfeita. Tente novamente."); }
         if (secretaria_ids.length) {
           const { error: scopeError } = await admin.from("user_secretarias").insert(secretaria_ids.map((secretaria_id: string) => ({ user_id: created.user.id, secretaria_id })));
-          if (scopeError) return fail(500, "scope_assignment_failed", "Conta criada, mas não foi possível vincular as secretarias.");
+          if (scopeError) { await rollbackNewUser(created.user.id); return fail(500, "scope_assignment_failed", "Não foi possível vincular as secretarias; a criação da conta foi desfeita. Tente novamente."); }
         }
         return json({ data: { id: created.user.id, email, display_name, is_active: true, must_change_password: true, roles: role_codes, secretaria_ids } }, 201);
       }
