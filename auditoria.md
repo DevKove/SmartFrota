@@ -4,13 +4,13 @@
 **Repositório:** https://github.com/DevKove/SmartFrota  
 **Branch:** main  
 **Escopo:** frontend, service worker, Edge Function ativa e metadados do banco Supabase.  
-**Status:** auditoria parcial baseada em evidências; testes E2E completos ainda bloqueados.
+**Status:** auditoria parcial baseada em evidências; testes E2E completos ainda bloqueados. Correções aditivas de esquema e API foram aplicadas, mas a execução real dos endpoints após a implantação ainda precisa ser confirmada.
 
 ## 1. Resumo executivo
 
 **Recomendação atual: NÃO DECLARAR PRONTO PARA LANÇAMENTO COMERCIAL.** Não foram executados testes completos de ponta a ponta em navegador autenticado, testes com usuários de cada perfil nem restauração de backup. Isso não significa que todos os módulos estejam defeituosos; significa que ainda faltam evidências para aprová-los.
 
-Foi identificada e corrigida uma falha de experiência/permissões da interface: itens do menu eram forçados a permanecer visíveis independentemente do perfil. Agora a navegação usa as permissões retornadas pela API e o perfil de administrador principal; a navegação também valida a permissão antes de abrir a página. O backend continua sendo a autoridade final de autorização.
+Foram identificados e corrigidos dois problemas funcionais: (1) itens do menu eram forçados a permanecer visíveis independentemente do perfil; (2) a API usava campos deleted_at/updated_at que faltavam em várias tabelas e não reconhecia três recursos consultados pela área de secretaria. A navegação agora usa as permissões retornadas pela API e a API foi atualizada para compatibilidade com o esquema e consulta dos recursos adicionais. O backend continua sendo a autoridade final de autorização.
 
 Não foram feitas alterações destrutivas no banco de produção, não foram criadas contas de teste, não foram processadas cobranças e não foram alteradas políticas RLS.
 
@@ -19,7 +19,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Frontend:** aplicação estática em index.html, HTML/CSS/JavaScript sem package.json na raiz.
 - **Hospedagem do frontend:** GitHub Pages, base /SmartFrota/.
 - **PWA:** manifest.webmanifest e service-worker.js.
-- **API:** Supabase Edge Function frotagov-api, versão ativa 15, verify_jwt=false; a função valida o token Bearer manualmente com Supabase Auth antes de acessar rotas protegidas.
+- **API:** Supabase Edge Function frotagov-api, versão ativa 16, verify_jwt=false; a função valida o token Bearer manualmente com Supabase Auth antes de acessar rotas protegidas.
 - **Banco:** PostgreSQL 17 no projeto Supabase SmartFrota (jyfphgnysvsrqdlbogoh).
 - **Autenticação:** Supabase Auth; o frontend mantém a sessão em sessionStorage.
 - **Recursos API identificados:** vehicles, secretarias, drivers, users, suppliers, work_orders, maintenance_plans, fuel_records, inspections, incidents, inventory_products, contracts e budget_sheets; rotas adicionais de autenticação, resumo do painel e consulta de perfis.
@@ -62,10 +62,22 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 8. Advisors de segurança Supabase: 28 ocorrências informativas de RLS sem policies e 1 alerta de proteção contra senhas vazadas desabilitada.
 9. Advisors de desempenho Supabase: 37 chaves estrangeiras sem índice de cobertura e 28 índices marcados como não utilizados.
 10. Inspeção da Edge Function ativa e das regras de autenticação, permissões, escopo por secretaria, criação/edição/desativação de usuários e operações de CRUD.
+11. Logs da versão 15 registraram HTTP 500 em consultas a recursos operacionais. A inspeção do esquema confirmou ausência de deleted_at em dez tabelas e de updated_at em algumas delas.
+12. Aplicada migração aditiva 20261023201201_align_api_resource_columns. A consulta posterior confirmou deleted_at/updated_at/created_at nos recursos que a API espera; não foram apagados registros.
+13. Edge Function atualizada para versão 16; foram adicionadas rotas de consulta somente leitura para financial_transactions, inventory_movements e vehicle_documents, com checagem de permissão e filtro por secretaria/veículos autorizados.
+14. O código-fonte da função e a migração foram sincronizados no GitHub. Nenhuma requisição foi registrada ainda para a versão 16 no momento da checagem; o teste runtime pós-deploy continua pendente.
 
 **Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede. Por isso, não afirmo que node scripts/validate-inline-js.mjs, o navegador, o build ou o GitHub Actions foram executados com sucesso. A validação isolada acima não substitui o pipeline real.
 
 ## 5. Defeito encontrado e correção aplicada
+
+### SF-API-001 — Recursos operacionais falhavam por incompatibilidade de esquema e rotas ausentes
+
+- **Severidade:** P1 (fluxos essenciais de consulta/gestão falhavam em módulos operacionais).
+- **Evidência:** logs da versão 15 registraram HTTP 500 em contratos, inspeções, ordens de serviço, abastecimentos, ocorrências, planos de manutenção e orçamento. A consulta ao esquema confirmou ausência de deleted_at em budget_sheets, contracts, fuel_records, incidents, inspections, inventory_products, maintenance_plans, work_orders, financial_transactions e inventory_movements; também faltavam updated_at em fuel_records, inspections, financial_transactions e inventory_movements, além de created_at em inventory_movements.
+- **Correção:** migração aditiva aplicada; a verificação posterior confirmou os campos esperados sem apagar registros. A Edge Function foi implantada como versão 16 e passou a reconhecer financial_transactions, inventory_movements e vehicle_documents como recursos somente de leitura, com autorização e escopo por secretaria/veículos.
+- **Evidência de implantação:** migração registrada como 20261023201201 / align_api_resource_columns; versão ativa da função confirmada como 16.
+- **Status:** esquema e implantação confirmados; requisições reais à versão 16 ainda não apareceram nos logs e devem ser validadas após recarregar a interface.
 
 ### SF-UI-001 — Itens de menu visíveis para perfis sem permissão
 
@@ -74,7 +86,9 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Correção:** implementado mapa página-permissão; itens sem permissão são ocultados, grupos vazios também são ocultados e a navegação verifica a permissão antes de abrir a página. A tela de usuários tem apresentação somente para consulta quando o perfil não é o administrador principal.
 - **Regressão:** o script de validação passou a verificar a existência da lógica de autorização visual e a ausência do estilo que forçava o menu a aparecer.
 - **Commit da correção de interface:** https://github.com/DevKove/SmartFrota/commit/9f79cd4d34225241f315bb057ff595f0822f4f9e
-- **Commit dos testes estáticos:** https://github.com/DevKove/SmartFrota/commit/8a7e0d7253c8df1c51da7073d63e96d3f2598405
+- **Commit dos testes estáticos:** https://github.com/DevKove/SmartFrota/commit/a5c4e55c3c6cc39ec9a1645725cf53d63f62772f
+- **Commit da migração versionada:** https://github.com/DevKove/SmartFrota/commit/3393eba0aba075f2e2fcb0734bf4ac0411919436
+- **Código-fonte da API versionada:** https://github.com/DevKove/SmartFrota/commit/10813ac97d564cdae2af2b31be2671e210540c71
 - **Status:** correção commitada; publicação e comportamento visual real ainda precisam de confirmação no navegador. A autorização do backend permanece obrigatória e não é substituída pela ocultação de menus.
 
 ## 6. Pendências técnicas e riscos residuais
@@ -99,7 +113,8 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 
 ## 7. Próximas etapas obrigatórias
 
-1. Confirmar no GitHub Actions o resultado da validação após os commits.
+1. Confirmar no GitHub Actions o resultado da validação após os commits. O status consultado ainda não retornou checks associados aos commits.
+2. Recarregar o sistema e confirmar que a versão 16 da API retorna 200 para as listas com esquema corrigido e para as três rotas adicionais.
 2. Executar os principais fluxos em navegador: login válido/inválido, restauração de sessão, logout, troca de senha, cada perfil e navegação por menu.
 3. Criar usuários fictícios em ambiente isolado para validar permissões e isolamento entre secretarias.
 4. Testar CRUD positivo/negativo de cada recurso, validações, conflitos de versão, persistência após recarregar e respostas 4xx/5xx.
@@ -112,4 +127,4 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 
 ## 8. Conclusão
 
-O trabalho executado até aqui encontrou e corrigiu um defeito de visibilidade do menu e confirmou a sintaxe dos scripts e alguns controles estáticos. A auditoria **não está concluída**: autenticação real, CRUD completo, isolamento entre secretarias, publicação no navegador, recuperação de backup e fluxos operacionais ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
+O trabalho executado encontrou e corrigiu a visibilidade do menu, aplicou a migração de compatibilidade e implantou a API versão 16 com as rotas adicionais. A auditoria **não está concluída**: autenticação real, CRUD completo, isolamento entre secretarias, runtime pós-deploy, publicação no navegador, recuperação de backup e fluxos operacionais ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
