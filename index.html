@@ -321,11 +321,38 @@ th{color:#243f5a;background:#e5eef8}
 .panel input::placeholder,.panel textarea::placeholder{color:#60758a;opacity:1}
 
 
-/* Contraste com tons escuros de azul para títulos e descrição */
-.content .eyebrow{color:#174a78!important;font-size:14px!important;font-weight:900!important;letter-spacing:1.2px;text-shadow:0 1px 2px rgba(0,0,0,.18)!important}
-.content .page-title{color:#0b2e53!important;font-size:clamp(28px,3vw,36px)!important;font-weight:850!important;text-shadow:0 1px 2px rgba(255,255,255,.12)!important;margin:8px 0 10px!important}
-.content>p.muted,.content>p{color:#123a60!important;font-size:16px!important;font-weight:700!important;line-height:1.6;text-shadow:0 1px 2px rgba(255,255,255,.12)}
-.content .panel .muted,.content .metric .muted{color:#334e68!important;text-shadow:none!important}
+/* Correção definitiva de contraste nos títulos e descrições das páginas de cadastro/consulta */
+#pageContent > .eyebrow,
+.content #pageContent .eyebrow,
+#pageContent .eyebrow{
+  color:#075985!important;
+  font-size:12px!important;
+  font-weight:850!important;
+  letter-spacing:1.15px!important;
+  text-shadow:none!important;
+}
+#pageContent > .page-title,
+.content #pageContent .page-title,
+#pageContent .page-title{
+  color:#082b57!important;
+  font-size:clamp(28px,3vw,36px)!important;
+  font-weight:850!important;
+  line-height:1.2!important;
+  text-shadow:none!important;
+  margin:8px 0 10px!important;
+}
+#pageContent > p,
+#pageContent > p.muted,
+.content #pageContent > p{
+  color:#243b53!important;
+  font-size:16px!important;
+  font-weight:600!important;
+  line-height:1.65!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+#pageContent .panel .muted,
+#pageContent .metric .muted{color:#334e68!important;text-shadow:none!important;}
 
 </style>
 </head>
