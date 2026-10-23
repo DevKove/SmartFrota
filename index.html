@@ -121,6 +121,13 @@ body:has(.login-wrap){min-height:100%;background:#061f3e!important;overflow-x:hi
 @supports not (height:100dvh){.login-wrap{min-height:100vh}}
 @media(max-width:900px){.login-wrap{min-height:100vh;min-height:100dvh;padding-bottom:18px}}
 
+
+/* Links legais no rodapé da tela de acesso */
+#loginView{padding-bottom:76px}
+.login-legal-footer{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;justify-content:center;align-items:center;gap:10px 22px;flex-wrap:wrap;padding:16px 20px;color:#d7eaff;font-size:12px;text-align:center;background:linear-gradient(180deg,transparent,#061f3e55)}
+.login-legal-footer a{color:#d7eaff;text-decoration:underline;text-underline-offset:3px}
+.login-legal-footer a:hover{color:#fff}
+@media(max-width:900px){#loginView{padding-bottom:86px}.login-legal-footer{gap:8px 18px;padding:14px 12px;background:#061f3e66}}
 </style>
 </head>
 <body>
@@ -131,6 +138,7 @@ body:has(.login-wrap){min-height:100%;background:#061f3e!important;overflow-x:hi
   <label for="password">Senha</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="Sua senha" aria-describedby="passwordToggle"><button id="passwordToggle" class="password-toggle" type="button" aria-label="Revelar senha" aria-pressed="false">Mostrar</button></div>
   <button id="loginButton" type="submit">Entrar com segurança</button><div id="loginError" class="error" role="alert"></div><p class="notice">Use sua conta autorizada pelo administrador do sistema. Se não conseguir entrar, solicite a liberação do seu acesso.</p>
   </form>
+  <footer class="login-legal-footer" aria-label="Informações legais"><span>© 2026 SmartFrota</span><a href="./terms.html">Termos de Uso</a><a href="./privacy.html">Política de Privacidade</a></footer>
 </section>
 <section id="appView" class="shell hidden">
 <aside id="sidebar" class="sidebar"><div class="sidebrand"><span class="sidebrand-mark" aria-hidden="true"><img src="https://images.openai.com/static-rsc-4/foDYJd6eYdTmfIpyQ0NYY7MQIk79KDJyuCqqrg7PuvRLj6qP4O__vzH9bFuvjdPY49nZ8BKrFOXLwzGmgW3HljH6LVdONTISUonQ1ggqnbvl30qL_ntRVezcMEeZAnavIExnl3klAiRl8pEezK466totA4aoROyvzH2XokFT9f0?purpose=inline" alt="" aria-hidden="true"></span><span class="sidebrand-copy">Smart<span style="color:#35b5ff">Frota</span><small>GESTÃO PÚBLICA</small></span></div><nav class="nav" id="nav">
