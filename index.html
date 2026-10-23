@@ -579,6 +579,11 @@ th{color:#243f5a;background:#e5eef8}
 #loginView{padding-bottom:130px}
 @media(max-width:900px){#loginView .login-institutional-contact{position:relative;left:auto;right:auto;bottom:auto;grid-column:1/-1;margin:0 0 88px;padding:10px 12px;flex-direction:column;align-items:center;gap:4px}#loginView{padding-bottom:18px}}
 @media(max-width:520px){#loginView .login-institutional-contact{font-size:11px;overflow-wrap:anywhere}#loginView .login-institutional-contact span{overflow-wrap:anywhere}}
+
+/* Logo institucional fixada na parte inferior do menu lateral */
+#appView .sidebar-logo-bottom{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;padding:10px 8px 2px;margin-top:0;border-top:1px solid rgba(255,255,255,.14)}
+#appView .sidebar-logo-bottom img{display:block;width:min(100%,176px);max-height:78px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.24));opacity:.98}
+@media(max-width:900px){#appView .sidebar-logo-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom))}#appView .sidebar-logo-bottom img{max-height:72px}}
 </style>
 
 <style id="smartfrota-glass-theme">
@@ -812,7 +817,7 @@ th{color:#243f5a;background:#e5eef8}
 <div class="nav-group-items" id="nav-items-gestao">
 <button data-page="budget_sheets">▤ &nbsp; Orçamento por secretaria</button><button data-page="reports">▥ &nbsp; Relatórios</button><button data-page="users">♙ &nbsp; Usuários e perfis</button>
 </div></section>
-</nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div></aside>
+</nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div><div class="sidebar-logo-bottom"><img src="https://raw.githubusercontent.com/DevKove/SmartFrota/main/icons/logo2.png" alt="Logo SmartFrota" loading="lazy"></div></aside>
 <div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
 <main id="pageContent" class="content"></main></div></section>
 <div id="toast" class="toast hidden" role="status"></div>
