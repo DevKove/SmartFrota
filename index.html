@@ -238,6 +238,20 @@ input,select,textarea{min-width:0;max-width:100%;font-size:16px}
  .content{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
 
+
+/* Ajustes solicitados: legibilidade do menu e fechamento ao clicar fora */
+.nav-group-toggle{font-size:13px!important;line-height:1.4;padding:11px 9px!important}
+.nav button,.nav-group-items button{font-size:14px;line-height:1.45;padding:10px 11px}
+.sidebrand{font-size:19px}
+.sidebrand small{font-size:10px}
+.sidefoot{font-size:12px;line-height:1.5}
+@media(max-width:900px){
+ .sidebar.open{width:min(300px,86vw);overflow-y:auto;overscroll-behavior:contain}
+ .nav-group-toggle{font-size:13px!important}
+ .nav button,.nav-group-items button{font-size:15px;padding:12px 12px}
+ .sidefoot{font-size:12px}
+}
+
 </style>
 </head>
 <body>
@@ -562,6 +576,21 @@ setOnline();
 </script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
+
+ // Fechar o menu lateral móvel ao tocar/clicar fora dele.
+ document.addEventListener('click',event=>{
+  const sidebar=document.getElementById('sidebar');
+  const menuButton=document.getElementById('mobileMenu');
+  if(!sidebar||!sidebar.classList.contains('open'))return;
+  if(!sidebar.contains(event.target)&&!menuButton?.contains(event.target)){
+   sidebar.classList.remove('open');
+  }
+ });
+ // Permitir fechar o menu móvel com a tecla Esc.
+ document.addEventListener('keydown',event=>{
+  if(event.key==='Escape')document.getElementById('sidebar')?.classList.remove('open');
+ });
+
  const groups=[...document.querySelectorAll('[data-nav-group]')];
  groups.forEach(group=>{
   const toggle=group.querySelector('.nav-group-toggle');
