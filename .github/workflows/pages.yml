@@ -1,4 +1,4 @@
-name: Publish FrotaGov static frontend to GitHub Pages
+name: Publish SmartFrota static frontend to GitHub Pages
 
 on:
   push:
