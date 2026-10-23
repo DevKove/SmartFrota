@@ -280,6 +280,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#5aa9f2;box-sh
 @media(max-width:900px){.main{background:radial-gradient(ellipse at 20% 0%,rgba(8,127,232,.08),transparent 42%),linear-gradient(145deg,#f6f9fd,#edf3fa)}.content:before{display:none}.metric:hover,.panel:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){.metric,.panel,tbody tr,input,select,textarea{transition:none}}
 
+
+
+/* Fundo das telas autenticadas alinhado ao visual fotográfico da tela de login */
+.main{position:relative;isolation:isolate;min-height:100vh;background:
+ linear-gradient(115deg,rgba(5,29,61,.96) 0%,rgba(6,49,94,.88) 47%,rgba(7,73,128,.70) 100%),
+ url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=2000&q=85') center center/cover fixed no-repeat;color:#f3f8ff}
+.main:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 10% 0%,rgba(44,164,255,.20),transparent 48%),linear-gradient(180deg,rgba(4,24,49,.08),rgba(4,24,49,.26))}
+.topbar{background:rgba(5,29,61,.76);color:#fff;border-bottom:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px);box-shadow:0 8px 28px rgba(0,10,30,.16)}
+.topbar h2,.userbox{color:#f4f8ff}
+.content{position:relative;isolation:isolate}
+.content:before{display:none}
+.page-title{color:#fff;text-shadow:0 2px 14px rgba(0,15,35,.25)}
+.eyebrow{color:#8bd6ff}
+.metric,.panel{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(240,247,255,.92));border:1px solid rgba(255,255,255,.48);box-shadow:0 18px 42px rgba(0,12,35,.20),inset 0 1px 0 rgba(255,255,255,.65);backdrop-filter:blur(12px)}
+.metric:hover,.panel:hover{border-color:rgba(139,214,255,.8);box-shadow:0 22px 48px rgba(0,12,35,.27),inset 0 1px 0 rgba(255,255,255,.7)}
+.panel-head{border-bottom-color:#dce8f5}
+th{background:#e8f2fc;color:#45617f}
+tbody tr:hover{background:#edf6ff}
+@media(max-width:900px){.main{background:linear-gradient(115deg,rgba(5,29,61,.95),rgba(6,49,94,.86)),url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat}.main:before{position:absolute}.topbar{backdrop-filter:blur(12px)}}
+@media(prefers-reduced-motion:reduce){.metric,.panel{transition:none}}
+
 </style>
 </head>
 <body>
