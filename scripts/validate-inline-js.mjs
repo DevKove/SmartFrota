@@ -51,6 +51,7 @@ for (const required of [
   'if (!token) return fail(401, "missing_bearer_token"',
   'async function rollbackNewUser(userId: string)',
   'await rollbackNewUser(created.user.id)',
+  'admin.auth.admin.signOut(token, "local")',
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
