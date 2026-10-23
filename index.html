@@ -755,6 +755,33 @@ th{color:#243f5a;background:#e5eef8}
 }
 </style>
 
+
+<style id="smartfrota-glass-transparency-tuning">
+/* Molduras um pouco mais transparentes, mantendo contraste e profundidade */
+#appView .metric,
+#appView .panel,
+#appView .card,
+#appView .modal,
+#appView .modal-content,
+#appView .dialog,
+#appView .form-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.80),rgba(244,250,255,.66));
+  border-color:rgba(255,255,255,.54);
+  box-shadow:0 18px 48px rgba(0,22,48,.19),inset 0 1px 0 rgba(255,255,255,.72);
+}
+#appView .metric:hover,
+#appView .panel:hover{
+  border-color:rgba(255,255,255,.72);
+  box-shadow:0 22px 54px rgba(0,22,48,.24),inset 0 1px 0 rgba(255,255,255,.82);
+}
+@media(prefers-reduced-transparency:reduce){
+  #appView .metric,#appView .panel,#appView .card,#appView .modal,
+  #appView .modal-content,#appView .dialog,#appView .form-card{
+    background:rgba(248,252,255,.96);
+  }
+}
+</style>
+
 </head>
 <body>
 <section id="loginView" class="login-wrap">
