@@ -711,14 +711,14 @@ async function login(email,password){
  const data=await request('/v1/auth/login',{method:'POST',body:JSON.stringify({email,password})});
  if(!data?.access_token)throw new Error(data?.error?.message||data?.message||'O servidor não retornou uma sessão válida.');
  state.token=data.access_token;state.user=data.user||{email};
- try{await loadProfile();}catch(error){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('smartfrota-session');throw new Error('A senha foi aceita, mas não foi possível carregar seu perfil. Tente novamente; se persistir, o administrador deve verificar o cadastro e as permissões.');}
- sessionStorage.setItem('smartfrota-session',JSON.stringify({token:state.token,user:state.user}));
+ try{await loadProfile();}catch(error){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');throw new Error('A senha foi aceita, mas não foi possível carregar seu perfil. Tente novamente; se persistir, o administrador deve verificar o cadastro e as permissões.');}
+ sessionStorage.setItem('frotagov-session',JSON.stringify({token:state.token,user:state.user}));
  $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();
  try{await navigate('dashboard');}catch(error){$('pageContent').innerHTML='<div class="error" role="alert">Você entrou, mas o painel não carregou. Verifique sua conexão e tente atualizar os dados. Detalhe: '+escapeHtml(error?.message||'erro inesperado')+'</div>';}
 }
 async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';applyNavigationPermissions();}
 function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard').catch(error=>{const c=$('pageContent');if(c)c.innerHTML='<div class="error" role="alert">O painel não carregou. '+escapeHtml(error?.message||'Tente atualizar a página.')+'</div>';});}
-function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('smartfrota-session');clearUserCache();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
+function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');clearUserCache();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
 function getCache(key){try{const item=JSON.parse(localStorage.getItem(cacheKey(key))||'null');return item?.data??null}catch{return null}}
 async function load(path,key){try{const result=await request(path);const data=result?.data??result;setCache(key,data);return data}catch(error){if(error?.status)throw error;const cached=getCache(key);if(cached!==null){toast('Sem conexão: exibindo os últimos dados salvos desta conta.');return cached}throw error}}
@@ -1144,7 +1144,7 @@ $('passwordToggle').addEventListener('click',()=>{const field=$('password');cons
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=$('loginButton');if(button.disabled)return;button.disabled=true;$('loginError').textContent='';try{await login($('email').value.trim(),$('password').value)}catch(err){$('loginError').textContent=err?.message||'Não foi possível entrar. Tente novamente.'}finally{button.disabled=false}});
 $('logoutButton').onclick=()=>logout();$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)navigate(b.dataset.page)});$('mobileMenu').onclick=()=>$('sidebar').classList.toggle('open');
 window.addEventListener('online',()=>{setOnline();if(state.token)toast('Conexão restabelecida. Atualize os dados para sincronizar.')} );window.addEventListener('offline',()=>{setOnline();toast('Sem conexão. A consulta usará os últimos dados salvos, se disponíveis.')});
-try{const saved=JSON.parse(sessionStorage.getItem('smartfrota-session')||'null');if(saved?.token){const restoringToken=saved.token;state.token=restoringToken;state.user=saved.user;loadProfile().then(()=>{if(state.token===restoringToken&&sessionStorage.getItem('smartfrota-session'))showApp()}).catch(()=>{if(state.token===restoringToken)logout(false)})}}catch{}
+try{const saved=JSON.parse(sessionStorage.getItem('frotagov-session')||'null');if(saved?.token){const restoringToken=saved.token;state.token=restoringToken;state.user=saved.user;loadProfile().then(()=>{if(state.token===restoringToken&&sessionStorage.getItem('frotagov-session'))showApp()}).catch(()=>{if(state.token===restoringToken)logout(false)})}}catch{}
 setOnline();
 })();
 </script>
@@ -1169,7 +1169,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  groups.forEach(group=>{
   const toggle=group.querySelector('.nav-group-toggle');
   const items=group.querySelector('.nav-group-items');
-  const key='smartfrota-nav-'+group.dataset.navGroup;
+  const key='frotagov-nav-'+group.dataset.navGroup;
   let open=true;
   try{const saved=localStorage.getItem(key);if(saved!==null)open=saved==='open'}catch(_){}
   const setOpen=value=>{toggle.setAttribute('aria-expanded',String(value));items.hidden=!value};
