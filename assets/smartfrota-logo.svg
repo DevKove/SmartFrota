@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260" role="img" aria-labelledby="title desc">
+<title id="title">SmartFrota</title><desc id="desc">Brasão com caminhão, ferramenta e seta de crescimento</desc>
+<defs><linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9fcff"/><stop offset=".48" stop-color="#aebdca"/><stop offset="1" stop-color="#e7edf2"/></linearGradient><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20c8ef"/><stop offset="1" stop-color="#087fe8"/></linearGradient><filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#082b57" flood-opacity=".22"/></filter></defs>
+<g filter="url(#shadow)" stroke-linejoin="round">
+<path d="M120 12 207 43 201 139Q190 202 120 244 50 202 39 139L33 43Z" fill="#f8fbff" stroke="#7892a8" stroke-width="5"/>
+<path d="M120 24 194 50 188 136Q178 190 120 226 62 190 52 136L46 50Z" fill="#0a2d55" stroke="url(#steel)" stroke-width="3"/>
+<path d="M62 59 120 39 178 59 174 77 120 59 66 77Z" fill="url(#blue)"/>
+<g transform="translate(55 83)">
+<path d="M7 26h66l13 17v38H7z" fill="url(#steel)" stroke="#edf7ff" stroke-width="3"/>
+<path d="M73 39h16l14 17v25H73z" fill="#d8e4ed" stroke="#edf7ff" stroke-width="3"/>
+<path d="M78 45h9l9 11H78z" fill="#22bce9"/>
+<path d="M0 72h103v13H0z" fill="#1cc1e8"/>
+<path d="M17 39h18v18H17zM43 39h18v18H43z" fill="#0b315c"/>
+<circle cx="26" cy="85" r="11" fill="#102b49" stroke="#dbe6ef" stroke-width="4"/><circle cx="82" cy="85" r="11" fill="#102b49" stroke="#dbe6ef" stroke-width="4"/>
+</g>
+<path d="M75 177 100 151 119 166 157 120" fill="none" stroke="url(#blue)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m144 119 16-7 2 19" fill="none" stroke="#31d5f4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M70 199h100" stroke="#e4eef6" stroke-width="3" stroke-linecap="round"/>
+</g></svg>
