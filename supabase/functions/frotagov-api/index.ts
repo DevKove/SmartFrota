@@ -117,7 +117,16 @@ Deno.serve(async (req: Request) => {
     const profile = await getProfile(token);
     if (!profile) return fail(401, "invalid_token", "Sessão inválida ou expirada. Entre novamente.");
     if (path === "/v1/auth/me" && req.method === "GET") return json({ user: { id: profile.id, email: profile.email, display_name: profile.display_name }, roles: profile.roles, permissions: profile.permissions, secretaria_ids: profile.secretaria_ids, must_change_password: profile.must_change_password });
-    if (path === "/v1/auth/logout" && req.method === "POST") return new Response(null, { status: 204, headers: cors });
+    if (path === "/v1/auth/logout" && req.method === "POST") {
+      // Revoke the current session's refresh token without terminating other devices.
+      // The current access-token JWT may remain valid until expiry; the frontend also clears local session state.
+      const { error } = await admin.auth.admin.signOut(token, "local");
+      if (error && ![401, 404].includes(error.status)) {
+        console.error("logout revocation failed", { status: error.status, code: error.code });
+        return fail(500, "logout_failed", "Não foi possível confirmar o encerramento da sessão no servidor.");
+      }
+      return new Response(null, { status: 204, headers: cors });
+    }
     if (path === "/v1/auth/change-password" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const current = String(body.current_password ?? ""), next = String(body.new_password ?? "");
