@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#087fe8"><meta name="description" content="SmartFrota — Gestão pública de frota">
-<link rel="manifest" href="/SmartFrota/manifest.webmanifest"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="apple-touch-icon" href="/SmartFrota/icons/icon-192.png">
+<link rel="manifest" href="/SmartFrota/manifest.webmanifest?v=4"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="apple-touch-icon" href="/SmartFrota/icons/icon-192.png">
 <title>SmartFrota | Gestão Pública</title>
 <style>
 :root{--navy:#082b57;--blue:#087fe8;--teal:#16a6e8;--bg:#f3f7fc;--ink:#1c3555;--muted:#637b98;--line:#dce6f1;--white:#fff;--red:#b42318;--green:#21834a;--shadow:0 12px 32px #082b5712;--brand-blue:#087fe8;--brand-navy:#082b57;--brand-pale:#eaf4ff}
@@ -607,7 +607,7 @@ th{color:#243f5a;background:#e5eef8}
  const updateButton=()=>{if(isStandalone()){button.style.display='none';hideHint();return;}button.style.display='inline-flex';button.hidden=false;};
  button.addEventListener('click',async()=>{
   if(installPrompt){installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;if(choice?.outcome==='accepted'){button.style.display='none';hideHint();}return;}
-  showHint(/iphone|ipad|ipod/i.test(navigator.userAgent)?'Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.':'Para instalar, use o menu do navegador e escolha “Instalar aplicativo” ou “Criar atalho”.');
+  showHint(/iphone|ipad|ipod/i.test(navigator.userAgent)?'Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.':'O navegador ainda não liberou a instalação automática. Atualize a página; se continuar, abra o diagnóstico PWA em chrome://web-app-internals (PC) ou chrome://inspect (Android).');
  });
  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateButton();});
  window.addEventListener('appinstalled',()=>{button.style.display='none';hideHint();});
