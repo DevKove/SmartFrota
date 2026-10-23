@@ -57,8 +57,9 @@ for (const table of [
   'inventory_products', 'maintenance_plans', 'work_orders',
   'financial_transactions', 'inventory_movements',
 ]) {
-  const line = new RegExp('ALTER TABLE public\\\\.' + table + ' ADD COLUMN IF NOT EXISTS deleted_at');
-  if (!line.test(migration)) throw new Error(`Migração sem deleted_at para: ${table}`);
+  if (!migration.includes('ALTER TABLE public.' + table + ' ADD COLUMN IF NOT EXISTS deleted_at')) {
+    throw new Error(`Migração sem deleted_at para: ${table}`);
+  }
 }
 
 console.log(`Validação concluída: ${inlineScripts.length} scripts inline, service-worker.js, autorização da API e migração de compatibilidade.`);
