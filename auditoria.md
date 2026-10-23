@@ -76,9 +76,9 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 
 - **Severidade:** P1 (fluxos essenciais de consulta/gestão falhavam em módulos operacionais).
 - **Evidência:** logs da versão 15 registraram HTTP 500 em contratos, inspeções, ordens de serviço, abastecimentos, ocorrências, planos de manutenção e orçamento. A consulta ao esquema confirmou ausência de deleted_at em budget_sheets, contracts, fuel_records, incidents, inspections, inventory_products, maintenance_plans, work_orders, financial_transactions e inventory_movements; também faltavam updated_at em fuel_records, inspections, financial_transactions e inventory_movements, além de created_at em inventory_movements.
-- **Correção:** migração aditiva aplicada; a verificação posterior confirmou os campos esperados sem apagar registros. A Edge Function foi implantada como versão 16 e passou a reconhecer financial_transactions, inventory_movements e vehicle_documents como recursos somente de leitura, com autorização e escopo por secretaria/veículos.
-- **Evidência de implantação:** migração registrada como 20261023201201 / align_api_resource_columns; versão ativa da função confirmada como 16.
-- **Status:** esquema e implantação confirmados; requisições reais à versão 16 ainda não apareceram nos logs e devem ser validadas após recarregar a interface.
+- **Correção:** migração aditiva aplicada; a verificação posterior confirmou os campos esperados sem apagar registros. A Edge Function foi implantada inicialmente como versão 16 e depois atualizada para versão 17, incluindo limpeza compensatória na criação de usuários; a versão 16 passou a reconhecer financial_transactions, inventory_movements e vehicle_documents como recursos somente de leitura, com autorização e escopo por secretaria/veículos.
+- **Evidência de implantação:** migração registrada como 20261023201201 / align_api_resource_columns; versão ativa da função confirmada como 17.
+- **Status:** esquema e implantação confirmados; requisições reais às versões 16 e 17 ainda não apareceram nos logs após a implantação; validar após recarregar a interface.
 
 ### SF-UI-001 — Itens de menu visíveis para perfis sem permissão
 
@@ -87,9 +87,9 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Correção:** implementado mapa página-permissão; itens sem permissão são ocultados, grupos vazios também são ocultados e a navegação verifica a permissão antes de abrir a página. A tela de usuários tem apresentação somente para consulta quando o perfil não é o administrador principal.
 - **Regressão:** o script de validação passou a verificar a existência da lógica de autorização visual e a ausência do estilo que forçava o menu a aparecer.
 - **Commit da correção de interface:** https://github.com/DevKove/SmartFrota/commit/9f79cd4d34225241f315bb057ff595f0822f4f9e
-- **Commit dos testes estáticos:** https://github.com/DevKove/SmartFrota/commit/a5c4e55c3c6cc39ec9a1645725cf53d63f62772f
+- **Commit dos testes estáticos:** https://github.com/DevKove/SmartFrota/commit/9c324bd4a1f6a8cf74ae35fdf57e7f3dc3622251
 - **Commit da migração versionada:** https://github.com/DevKove/SmartFrota/commit/3393eba0aba075f2e2fcb0734bf4ac0411919436
-- **Código-fonte da API versionada:** https://github.com/DevKove/SmartFrota/commit/10813ac97d564cdae2af2b31be2671e210540c71
+- **Código-fonte da API versionada:** https://github.com/DevKove/SmartFrota/commit/859b7dc89b885e4c7fec293ed7e3f455ea963f73
 - **Status:** correção commitada; publicação e comportamento visual real ainda precisam de confirmação no navegador. A autorização do backend permanece obrigatória e não é substituída pela ocultação de menus.
 
 ## 6. Pendências técnicas e riscos residuais
