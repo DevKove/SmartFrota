@@ -10,9 +10,19 @@
   "orientation": "any",
   "background_color": "#082b57",
   "theme_color": "#087fe8",
-  "categories": ["business", "productivity", "utilities"],
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
   "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "/SmartFrota/icons/smartfrota.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/SmartFrota/icons/icon-192.png",
       "sizes": "192x192",
