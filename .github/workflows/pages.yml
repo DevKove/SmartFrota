@@ -7,6 +7,9 @@ on:
       - "index.html"
       - "terms.html"
       - "privacy.html"
+      - "manifest.webmanifest"
+      - "service-worker.js"
+      - "icons/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -34,6 +37,9 @@ jobs:
           cp index.html dist/index.html
           cp terms.html dist/terms.html
           cp privacy.html dist/privacy.html
+          cp manifest.webmanifest dist/manifest.webmanifest
+          cp service-worker.js dist/service-worker.js
+          cp -R icons dist/icons
           touch dist/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
