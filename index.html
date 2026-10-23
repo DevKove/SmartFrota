@@ -580,10 +580,12 @@ th{color:#243f5a;background:#e5eef8}
 @media(max-width:900px){#loginView .login-institutional-contact{position:relative;left:auto;right:auto;bottom:auto;grid-column:1/-1;margin:0 0 88px;padding:10px 12px;flex-direction:column;align-items:center;gap:4px}#loginView{padding-bottom:18px}}
 @media(max-width:520px){#loginView .login-institutional-contact{font-size:11px;overflow-wrap:anywhere}#loginView .login-institutional-contact span{overflow-wrap:anywhere}}
 
-/* Logo institucional fixada na parte inferior do menu lateral */
-#appView .sidebar-logo-bottom{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;padding:10px 8px 2px;margin-top:0;border-top:1px solid rgba(255,255,255,.14)}
+/* Brasão preso ao rodapé; a navegação rola sem deslocar a marca */
+#appView .sidebar{position:sticky;top:0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+#appView .sidebar .nav{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#appView .sidebar-logo-bottom{position:relative;z-index:2;display:flex;flex:0 0 auto;align-items:center;justify-content:center;width:100%;margin-top:auto;padding:10px 8px 8px;border-top:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(3,22,45,.96),rgba(2,20,41,.99))}
 #appView .sidebar-logo-bottom img{display:block;width:min(100%,264px);max-height:117px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.24));opacity:.98}
-@media(max-width:900px){#appView .sidebar-logo-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom))}#appView .sidebar-logo-bottom img{max-height:108px}}
+@media(max-width:900px){#appView .sidebar{position:fixed;inset:0 auto 0 0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh}#appView .sidebar-logo-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom))}#appView .sidebar-logo-bottom img{max-height:108px}}
 </style>
 
 <style id="smartfrota-glass-theme">
