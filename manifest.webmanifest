@@ -18,10 +18,16 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/SmartFrota/icons/smartfrota.svg",
+      "src": "/SmartFrota/icons/logo.jpg",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "any"
+    },
+    {
+      "src": "/SmartFrota/icons/logo.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     },
     {
       "src": "/SmartFrota/icons/icon-192.png",
