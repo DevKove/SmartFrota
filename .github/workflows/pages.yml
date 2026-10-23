@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "terms.html"
+      - "privacy.html"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,6 +32,8 @@ jobs:
         run: |
           mkdir -p dist
           cp index.html dist/index.html
+          cp terms.html dist/terms.html
+          cp privacy.html dist/privacy.html
           touch dist/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
