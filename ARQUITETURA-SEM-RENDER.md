@@ -1,4 +1,4 @@
-# SmartFrota / FrotaGov — arquitetura sem Render
+# SmartFrota — arquitetura sem Render
 
 ## O que está configurado
 
