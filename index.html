@@ -1075,7 +1075,39 @@ async function renderUsers(){
  await run();
 }
 
-async function navigate(page){state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');if(page==='dashboard')await renderDashboard();else if(page==='reports')await renderReports();else if(page==='users')await renderUsers();else await renderList(page)}
+function renderPasswordChange(){
+ state.page='change_password';
+ $('pageHeading').textContent='Definir senha definitiva';
+ $('nav').classList.add('hidden');
+ document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
+ $('sidebar').classList.remove('open');
+ const c=$('pageContent');
+ c.innerHTML='<div class="eyebrow">Segurança da conta</div><h1 class="page-title">Defina sua nova senha</h1><p class="muted">Por segurança, troque a senha temporária antes de continuar. Use pelo menos 14 caracteres.</p><section class="panel" style="max-width:620px"><form id="passwordChangeForm" novalidate><label for="currentPassword">Senha temporária atual</label><input id="currentPassword" type="password" autocomplete="current-password" required maxlength="1024"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" required minlength="14" maxlength="1024"><label for="confirmPassword">Confirme a nova senha</label><input id="confirmPassword" type="password" autocomplete="new-password" required minlength="14" maxlength="1024><div id="passwordChangeError" class="error" role="alert" aria-live="polite"></div><button id="passwordChangeButton" type="submit">Salvar nova senha</button></form></section>';
+ const form=$('passwordChangeForm');
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const current=$('currentPassword').value,newPassword=$('newPassword').value,confirmation=$('confirmPassword').value,msg=$('passwordChangeError'),button=$('passwordChangeButton');
+  msg.textContent='';
+  if(newPassword.length<14){msg.textContent='A nova senha deve ter pelo menos 14 caracteres.';return;}
+  if(newPassword!==confirmation){msg.textContent='A confirmação não corresponde à nova senha.';return;}
+  if(newPassword===current){msg.textContent='Escolha uma senha diferente da senha temporária.';return;}
+  button.disabled=true;button.textContent='Salvando…';
+  try{
+   await request('/v1/auth/change-password',{method:'POST',body:JSON.stringify({current_password:current,new_password:newPassword})});
+   if(state.profile)state.profile.must_change_password=false;
+   $('password').value='';
+   await navigate('dashboard');
+   toast('Senha alterada. Acesso liberado.');
+  }catch(error){msg.textContent=error?.message||'Não foi possível alterar a senha. Confira a senha atual e tente novamente.';}
+  finally{if(button.isConnected){button.disabled=false;button.textContent='Salvar nova senha';}}
+ });
+}
+async function navigate(page){
+ if(state.profile?.must_change_password&&page!=='change_password'){renderPasswordChange();return;}
+ $('nav').classList.remove('hidden');
+ state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');
+ if(page==='dashboard')await renderDashboard();else if(page==='reports')await renderReports();else if(page==='users')await renderUsers();else await renderList(page);
+}
 $('passwordToggle').addEventListener('click',()=>{const field=$('password');const reveal=field.type==='password';field.type=reveal?'text':'password';$('passwordToggle').textContent=reveal?'Ocultar':'Mostrar';$('passwordToggle').setAttribute('aria-label',reveal?'Ocultar senha':'Revelar senha');$('passwordToggle').setAttribute('aria-pressed',String(reveal));field.focus()});
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=$('loginButton');if(button.disabled)return;button.disabled=true;$('loginError').textContent='';try{await login($('email').value.trim(),$('password').value)}catch(err){$('loginError').textContent=err?.message||'Não foi possível entrar. Tente novamente.'}finally{button.disabled=false}});
 $('logoutButton').onclick=()=>logout();$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)navigate(b.dataset.page)});$('mobileMenu').onclick=()=>$('sidebar').classList.toggle('open');
