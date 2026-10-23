@@ -59,7 +59,14 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px #21a0a01c,0 5px 14p
 </section>
 <section id="appView" class="shell hidden">
 <aside id="sidebar" class="sidebar"><div class="sidebrand">SmartFrota <small>GESTÃO PÚBLICA</small></div><nav class="nav" id="nav">
-<button class="active" data-page="dashboard">▦ &nbsp; Visão geral</button><button data-page="vehicles">▣ &nbsp; Veículos</button><button data-page="secretarias">▤ &nbsp; Secretarias</button><button data-page="drivers">♙ &nbsp; Condutores</button><button data-page="reports" style="display:block!important;visibility:visible!important">▥ &nbsp; Relatórios</button><button data-page="users" style="display:block!important;visibility:visible!important">♙ &nbsp; Usuários e perfis</button>
+<button class="active" data-page="dashboard">▦ &nbsp; Visão geral</button>
+<button data-page="vehicles">▣ &nbsp; Veículos e frota</button><button data-page="secretarias">▤ &nbsp; Secretarias</button><button data-page="drivers">♙ &nbsp; Condutores</button>
+<div style="padding:12px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.65">Operação da frota</div>
+<button data-page="work_orders">🛠 &nbsp; Ordens de serviço</button><button data-page="maintenance_plans">🗓 &nbsp; Planos de manutenção</button><button data-page="fuel_records">⛽ &nbsp; Abastecimentos</button><button data-page="inspections">✓ &nbsp; Inspeções e checklists</button><button data-page="incidents">⚠ &nbsp; Ocorrências e sinistros</button>
+<div style="padding:12px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.65">Suprimentos e contratos</div>
+<button data-page="suppliers">♧ &nbsp; Fornecedores / Prestadores</button><button data-page="inventory_products">▦ &nbsp; Almoxarifado / Peças</button><button data-page="contracts">▤ &nbsp; Contratos</button>
+<div style="padding:12px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.65">Gestão pública</div>
+<button data-page="budget_sheets">▤ &nbsp; Orçamento por secretaria</button><button data-page="reports" style="display:block!important;visibility:visible!important">▥ &nbsp; Relatórios</button><button data-page="users" style="display:block!important;visibility:visible!important">♙ &nbsp; Usuários e perfis</button>
 </nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div></aside>
 <div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
 <main id="pageContent" class="content"></main></div></section>
@@ -71,7 +78,7 @@ const API='https://jyfphgnysvsrqdlbogoh.supabase.co/functions/v1/frotagov-api';
 const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
-const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',reports:'Relatórios',users:'Usuários e perfis'};
+const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',suppliers:'Fornecedores / Prestadores',work_orders:'Ordens de serviço',maintenance_plans:'Planos de manutenção',fuel_records:'Abastecimentos',inspections:'Inspeções e checklists',incidents:'Ocorrências e sinistros',inventory_products:'Almoxarifado / Peças',contracts:'Contratos',budget_sheets:'Orçamento por secretaria',reports:'Relatórios',users:'Usuários e perfis'};
 const cacheKey=key=>'frotagov-cache-'+key;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),4200)}
 function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
@@ -181,16 +188,16 @@ async function renderUsers(){
    document.body.appendChild(modal);
    const form=modal.querySelector('#editUserForm');form.elements.display_name.value=u.display_name||'';form.elements.email.value=u.email||'';form.elements.is_active.value=String(u.is_active!==false);form.elements.secretaria_ids.value=(u.secretaria_ids||[]).join(',');
    const roleMenuAccess={
-    system_admin:['Visão geral','Veículos','Secretarias','Condutores','Relatórios','Usuários e perfis'],
-    auditor:['Visão geral','Veículos','Secretarias','Condutores','Relatórios'],
-    finance_manager:['Visão geral','Secretarias','Relatórios'],
-    fleet_manager:['Visão geral','Veículos','Condutores','Relatórios'],
-    inventory_manager:['Visão geral','Relatórios'],
-    maintenance_manager:['Visão geral','Veículos','Condutores','Relatórios'],
-    read_only:['Visão geral','Veículos','Secretarias','Condutores','Relatórios']
+    system_admin:['Visão geral','Veículos e frota','Secretarias','Condutores','Ordens de serviço','Planos de manutenção','Abastecimentos','Inspeções e checklists','Ocorrências e sinistros','Fornecedores / Prestadores','Almoxarifado / Peças','Contratos','Orçamento por secretaria','Relatórios','Usuários e perfis'],
+    auditor:['Visão geral','Veículos e frota','Secretarias','Condutores','Ordens de serviço','Abastecimentos','Inspeções e checklists','Ocorrências e sinistros','Fornecedores / Prestadores','Almoxarifado / Peças','Contratos','Orçamento por secretaria','Relatórios'],
+    finance_manager:['Visão geral','Secretarias','Fornecedores / Prestadores','Contratos','Orçamento por secretaria','Ordens de serviço','Abastecimentos','Relatórios'],
+    fleet_manager:['Visão geral','Veículos e frota','Secretarias','Condutores','Ordens de serviço','Planos de manutenção','Abastecimentos','Inspeções e checklists','Ocorrências e sinistros','Fornecedores / Prestadores','Almoxarifado / Peças','Contratos','Relatórios'],
+    inventory_manager:['Visão geral','Veículos e frota','Ordens de serviço','Almoxarifado / Peças','Fornecedores / Prestadores','Relatórios'],
+    maintenance_manager:['Visão geral','Veículos e frota','Condutores','Ordens de serviço','Planos de manutenção','Abastecimentos','Inspeções e checklists','Ocorrências e sinistros','Fornecedores / Prestadores','Almoxarifado / Peças','Relatórios'],
+    read_only:['Visão geral','Veículos e frota','Secretarias','Condutores','Ordens de serviço','Planos de manutenção','Abastecimentos','Inspeções e checklists','Ocorrências e sinistros','Fornecedores / Prestadores','Almoxarifado / Peças','Contratos','Orçamento por secretaria','Relatórios']
    };
-   const menuIcons={'Visão geral':'▦','Veículos':'▣','Secretarias':'▤','Condutores':'♙','Relatórios':'▥','Usuários e perfis':'♙'};
-   const menuKeys={'Visão geral':'dashboard','Veículos':'vehicles','Secretarias':'secretarias','Condutores':'drivers','Relatórios':'reports','Usuários e perfis':'users'};
+   const menuIcons={'Visão geral':'▦','Veículos e frota':'▣','Secretarias':'▤','Condutores':'♙','Ordens de serviço':'🛠','Planos de manutenção':'🗓','Abastecimentos':'⛽','Inspeções e checklists':'✓','Ocorrências e sinistros':'⚠','Fornecedores / Prestadores':'♧','Almoxarifado / Peças':'▦','Contratos':'▤','Orçamento por secretaria':'▤','Relatórios':'▥','Usuários e perfis':'♙'};
+   const menuKeys={'Visão geral':'dashboard','Veículos e frota':'vehicles','Secretarias':'secretarias','Condutores':'drivers','Ordens de serviço':'work_orders','Planos de manutenção':'maintenance_plans','Abastecimentos':'fuel_records','Inspeções e checklists':'inspections','Ocorrências e sinistros':'incidents','Fornecedores / Prestadores':'suppliers','Almoxarifado / Peças':'inventory_products','Contratos':'contracts','Orçamento por secretaria':'budget_sheets','Relatórios':'reports','Usuários e perfis':'users'};
    modal.querySelector('#editRoleChoices').innerHTML=roles.map(r=>'<label style="display:flex;gap:8px;align-items:flex-start;padding:10px;border:1px solid var(--border,#ddd);border-radius:10px"><input type="checkbox" name="role_codes" value="'+escapeHtml(r.code)+'" '+(selectedRoles.includes(r.code)?'checked':'')+'> <span><strong>'+escapeHtml(r.name||r.code)+'</strong><small style="display:block">'+escapeHtml(r.code)+'</small><small style="display:block;margin-top:5px;color:var(--muted,#667085)">Menu: '+escapeHtml((roleMenuAccess[r.code]||['Visão geral']).join(', '))+'</small></span></label>').join('');
    const accessPanel=document.createElement('fieldset');accessPanel.style.cssText='grid-column:1/-1;border:1px solid var(--border,#ddd);border-radius:12px;padding:14px';accessPanel.innerHTML='<legend>Resumo do menu lateral por perfil selecionado</legend><p class="muted">A lista abaixo é atualizada ao marcar ou desmarcar perfis.</p><div id="roleMenuSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px"></div>';
    form.querySelector('fieldset').after(accessPanel);
