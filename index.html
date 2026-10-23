@@ -94,6 +94,16 @@ button{border-radius:8px}
 @media(max-width:900px){.login-wrap{grid-template-columns:1fr;background-position:center;padding:18px;gap:14px}.brand-panel{max-width:none;padding:20px;border-left-width:3px}.brand-panel h1{font-size:40px}.login-card{margin:0 auto 14px;width:min(100%,480px)}.shell{grid-template-columns:1fr}.sidebar{padding:14px}.topbar{padding:12px 15px}.content{padding:15px}}
 @media(max-width:480px){.brand-panel .brand-mark{width:58px;height:58px}.brand-mark svg{width:52px;height:52px}.brand-panel h1{font-size:35px}.brand-panel p{font-size:15px}.brand-features{margin-top:12px}.login-card{padding:22px}.topbar h2{font-size:17px}}
 
+
+.filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px;align-items:end}
+.filter-grid label{margin:0;font-size:12px;color:#25486c}
+.filter-grid input,.filter-grid select{margin-top:5px;padding:10px 11px;font-size:13px}
+.filter-wide{grid-column:1/-1}
+.nested-filters{grid-template-columns:repeat(4,minmax(0,1fr));padding-top:4px}
+.filter-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}
+@media(max-width:900px){.filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nested-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.filter-grid,.nested-filters{grid-template-columns:1fr}.filter-wide{grid-column:auto}.filter-footer{align-items:flex-start;flex-direction:column}}
+
 </style>
 </head>
 <body>
@@ -170,8 +180,9 @@ async function renderDashboard(){
  catch(e){$('connectionMessage').textContent='Não foi possível atualizar os indicadores. Tente novamente em instantes.';toast('Não foi possível carregar as informações. Tente novamente.')}
 }
 async function renderList(key){
- const c=$('pageContent'),plural=labels[key];c.innerHTML='<div class="eyebrow">Cadastro e consulta</div><h1 class="page-title">'+escapeHtml(plural)+'</h1><p class="muted">Registros disponíveis conforme seu perfil de acesso.</p><section class="panel"><div class="panel-head"><h3>Lista de '+escapeHtml(plural.toLowerCase())+'</h3><div class="actions"><button class="secondary" id="refreshBtn" type="button">Atualizar</button>'+'<button id="newBtn" type="button">+ Novo cadastro</button>'+'</div></div><div id="listContent" class="empty">Carregando…</div></section><section id="formPanel" class="panel hidden"></section>';
- const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);const arr=Array.isArray(rows)?rows:[];let headers,html;
+ const c=$('pageContent'),plural=labels[key];
+ c.innerHTML='<div class="eyebrow">Cadastro e consulta</div><h1 class="page-title">'+escapeHtml(plural)+'</h1><p class="muted">Use os filtros para localizar registros com precisão. Os filtros são aplicados aos dados carregados e não alteram os registros.</p><section class="panel"><div class="panel-head"><h3>Filtros detalhados</h3><div class="actions"><button class="secondary" id="clearFilters" type="button">Limpar filtros</button><button class="secondary" id="refreshBtn" type="button">Atualizar dados</button><button id="newBtn" type="button">+ Novo cadastro</button></div></div><div class="filter-grid" id="filterGrid"><label class="filter-wide">Busca geral<input id="filterSearch" type="search" placeholder="Buscar em todos os campos…"></label><label>Campo específico<select id="filterField"><option value="">Todos os campos</option></select></label><label>Contém o texto<input id="filterValue" type="search" placeholder="Valor a localizar"></label><label>Situação / status<select id="filterStatus"><option value="">Todas as situações</option></select></label><label>Data inicial<input id="filterDateFrom" type="date"></label><label>Data final<input id="filterDateTo" type="date"></label><div class="filter-wide filter-context" id="filterContext"></div></div><div class="filter-footer"><span id="filterCount" class="muted">Preparando filtros…</span><button class="secondary" id="applyFilters" type="button">Aplicar filtros</button></div></section><section class="panel"><div class="panel-head"><h3>Lista de '+escapeHtml(plural.toLowerCase())+'</h3></div><div id="listContent" class="empty">Carregando…</div></section><section id="formPanel" class="panel hidden"></section>';
+ let allRows=[];
  const configs={
  vehicles:{headers:['Frota','Placa','Marca / Modelo','Secretaria','Ano','Situação'],cells:x=>[x.fleet_number,x.plate,[x.make,x.model].filter(Boolean).join(' '),x.secretaria_id,x.model_year,x.status]},
  secretarias:{headers:['Sigla','Secretaria','Responsável','Centro de custo','Situação'],cells:x=>[x.sigla,x.nome,x.responsavel_nome,x.centro_custo,x.status]},
@@ -186,11 +197,58 @@ async function renderList(key){
  contracts:{headers:['Contrato','Objeto','Fornecedor','Vigência','Valor','Status'],cells:x=>[x.contract_number,x.title,x.supplier_id,[x.starts_on,x.ends_on].filter(Boolean).join(' a '),money(x.total_value),x.status]},
  budget_sheets:{headers:['Código','Descrição','Exercício','Valor inicial','Secretaria','Status'],cells:x=>[x.code,x.description,x.fiscal_year,money(x.initial_amount),x.secretaria_id,x.status]}
  };
- const cfg=configs[key]||configs.drivers;headers=cfg.headers;html=arr.map(x=>'<tr>'+cfg.cells(x).map(v=>'<td>'+escapeHtml(v??'—')+'</td>').join('')+'</tr>');
- target.innerHTML=table(headers,html)
- }catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>'}};
- $('refreshBtn').onclick=run;run();
+ const cfg=configs[key]||configs.drivers;
+ const fieldLabels={sigla:'Sigla',nome:'Nome da secretaria',responsavel_nome:'Responsável',centro_custo:'Centro de custo',status:'Situação',created_at:'Data de cadastro',updated_at:'Última atualização',plate:'Placa',fleet_number:'Número de frota',make:'Marca',model:'Modelo',model_year:'Ano',full_name:'Nome completo',employee_number:'Matrícula',cpf:'CPF',phone:'Telefone',email:'E-mail',legal_name:'Razão social',trade_name:'Nome fantasia',tax_identifier:'CNPJ / CPF',order_number:'Número da ordem',title:'Título',priority:'Prioridade',occurred_at:'Data da ocorrência',inspected_at:'Data da inspeção',next_due_on:'Próxima data',fiscal_year:'Exercício',code:'Código',description:'Descrição',result:'Resultado',severity:'Gravidade',active:'Ativo'};
+ const val=x=>x===null||x===undefined?'':String(x);
+ const norm=x=>val(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const dateVal=x=>{const v=val(x);if(!v)return '';const d=v.slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(d)?d:''};
+ function setupFilters(){
+  const fields=[...new Set(allRows.flatMap(x=>Object.keys(x||{})))].sort();
+  $('filterField').innerHTML='<option value="">Todos os campos</option>'+fields.map(f=>'<option value="'+escapeHtml(f)+'">'+escapeHtml(fieldLabels[f]||f.replace(/_/g,' '))+'</option>').join('');
+  const statusFields=['status','active','result','priority','severity'].filter(f=>fields.includes(f));
+  const statuses=[...new Set(allRows.flatMap(x=>statusFields.map(f=>val(x[f])).filter(Boolean)))].sort();
+  $('filterStatus').innerHTML='<option value="">Todas as situações</option>'+statuses.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join('');
+  const ctx=$('filterContext');
+  if(key==='secretarias'){
+   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Sigla<input id="ctxSigla" type="search" placeholder="Ex.: SMS"></label><label>Nome da secretaria<input id="ctxNome" type="search" placeholder="Nome ou parte do nome"></label><label>Responsável<input id="ctxResponsavel" type="search" placeholder="Nome do responsável"></label><label>Centro de custo<input id="ctxCentro" type="search" placeholder="Código do centro de custo"></label></div>';
+  }else if(key==='vehicles'){
+   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Placa<input id="ctxPlate" type="search" placeholder="ABC1D23"></label><label>Marca ou modelo<input id="ctxVehicle" type="search" placeholder="Marca/modelo"></label><label>Ano<input id="ctxYear" type="number" min="1900" max="2200" placeholder="Ano"></label><label>Nº da frota<input id="ctxFleet" type="search" placeholder="Identificação da frota"></label></div>';
+  }else if(key==='drivers'){
+   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Condutor<input id="ctxDriver" type="search" placeholder="Nome do condutor"></label><label>CPF<input id="ctxCpf" type="search" placeholder="CPF"></label><label>Matrícula<input id="ctxEmployee" type="search" placeholder="Matrícula funcional"></label><label>Telefone<input id="ctxPhone" type="search" placeholder="Telefone"></label></div>';
+  }else if(key==='work_orders'){
+   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Número da ordem<input id="ctxOrder" type="search" placeholder="Nº da OS"></label><label>Veículo (ID/placa)<input id="ctxVehicle" type="search" placeholder="Veículo relacionado"></label><label>Prioridade<select id="ctxPriority"><option value="">Todas</option>'+[...new Set(allRows.map(x=>val(x.priority)).filter(Boolean))].sort().map(v=>'<option>'+escapeHtml(v)+'</option>').join('')+'</select></label><label>Custo mínimo<input id="ctxMinCost" type="number" min="0" step=".01" placeholder="R$"></label><label>Custo máximo<input id="ctxMaxCost" type="number" min="0" step=".01" placeholder="R$"></label></div>';
+  }else ctx.innerHTML='';
+ }
+ function matches(x){
+  const search=norm($('filterSearch').value),field=$('filterField').value,value=norm($('filterValue').value),status=$('filterStatus').value;
+  if(search&&!Object.values(x).some(v=>norm(v).includes(search)))return false;
+  if(value&&!(field?norm(x[field]).includes(value):Object.values(x).some(v=>norm(v).includes(value))))return false;
+  if(status){const sf=['status','active','result','priority','severity'].find(f=>val(x[f])===status);if(!sf)return false}
+  const from=$('filterDateFrom').value,to=$('filterDateTo').value;
+  if(from||to){const dates=Object.values(x).map(dateVal).filter(Boolean);if(!dates.length)return false;if(from&&!dates.some(d=>d>=from))return false;if(to&&!dates.some(d=>d<=to))return false}
+  const check=(id,prop)=>{const el=$(id);return !el||!el.value||norm(x[prop]).includes(norm(el.value))};
+  if(key==='secretarias'&&(!check('ctxSigla','sigla')||!check('ctxNome','nome')||!check('ctxResponsavel','responsavel_nome')||!check('ctxCentro','centro_custo')))return false;
+  if(key==='vehicles'&&(!check('ctxPlate','plate')||!check('ctxVehicle','make')&&!check('ctxVehicle','model')||!check('ctxFleet','fleet_number')||$('ctxYear')?.value&&val(x.model_year)!==val($('ctxYear').value)))return false;
+  if(key==='drivers'&&(!check('ctxDriver','full_name')||!check('ctxCpf','cpf')||!check('ctxEmployee','employee_number')||!check('ctxPhone','phone')))return false;
+  if(key==='work_orders'){
+   if(!check('ctxOrder','order_number')||!check('ctxVehicle','vehicle_id')||$('ctxPriority')?.value&&val(x.priority)!==val($('ctxPriority').value))return false;
+   const min=$('ctxMinCost')?.value,max=$('ctxMaxCost')?.value,cost=Number(x.estimated_cost||0);if(min&&cost<Number(min)||max&&cost>Number(max))return false;
+  }
+  return true;
+ }
+ function draw(){
+  const filtered=allRows.filter(matches);
+  $('filterCount').textContent=filtered.length+' de '+allRows.length+' registro(s)';
+  $('listContent').innerHTML=table(cfg.headers,filtered.map(x=>'<tr>'+cfg.cells(x).map(v=>'<td>'+escapeHtml(v??'—')+'</td>').join('')+'</tr>'));
+ }
+ const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);allRows=Array.isArray(rows)?rows:[];setupFilters();draw()}catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>';$('filterCount').textContent='Não foi possível carregar os registros.'}};
+ $('refreshBtn').onclick=run;
  $('newBtn').onclick=()=>showCreateForm(key);
+ $('applyFilters').onclick=draw;
+ $('clearFilters').onclick=()=>{['filterSearch','filterValue','filterStatus','filterDateFrom','filterDateTo','filterField'].forEach(id=>$(id).value='');document.querySelectorAll('#filterContext input,#filterContext select').forEach(el=>el.value='');draw()};
+ $('filterGrid').addEventListener('input',e=>{if(e.target.matches('input'))draw()});
+ $('filterGrid').addEventListener('change',draw);
+ run();
 }
 function showCreateForm(key){
  const panel=$('formPanel');panel.classList.remove('hidden');
