@@ -1,13 +1,13 @@
 /* SmartFrota PWA — cache somente da interface estática; nunca armazena respostas de API ou dados pessoais. */
 const CACHE_PREFIX = 'smartfrota-pwa-';
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
