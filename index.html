@@ -667,12 +667,15 @@ function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':
 function money(value){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value||0))}
 async function login(email,password){
  const data=await request('/v1/auth/login',{method:'POST',body:JSON.stringify({email,password})});
- state.token=data.access_token;state.user=data.user;
+ if(!data?.access_token)throw new Error(data?.error?.message||data?.message||'O servidor não retornou uma sessão válida.');
+ state.token=data.access_token;state.user=data.user||{email};
+ try{await loadProfile();}catch(error){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');throw new Error('A senha foi aceita, mas não foi possível carregar seu perfil. Tente novamente; se persistir, o administrador deve verificar o cadastro e as permissões.');}
  sessionStorage.setItem('frotagov-session',JSON.stringify({token:state.token,user:state.user}));
- await loadProfile();showApp();
+ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();
+ try{await navigate('dashboard');}catch(error){$('pageContent').innerHTML='<div class="error" role="alert">Você entrou, mas o painel não carregou. Verifique sua conexão e tente atualizar os dados. Detalhe: '+escapeHtml(error?.message||'erro inesperado')+'</div>';}
 }
 async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';}
-function showApp(){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard')}
+function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard').catch(error=>{const c=$('pageContent');if(c)c.innerHTML='<div class="error" role="alert">O painel não carregou. '+escapeHtml(error?.message||'Tente atualizar a página.')+'</div>';});}
 function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
 function getCache(key){try{const item=JSON.parse(localStorage.getItem(cacheKey(key))||'null');return item?.data??null}catch{return null}}
