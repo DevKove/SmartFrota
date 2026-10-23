@@ -1,21 +1,35 @@
 {
   "id": "/SmartFrota/",
-  "name": "SmartFrota — Gestão Pública de Frota",
+  "name": "SmartFrota - Gestão Pública de Frota",
   "short_name": "SmartFrota",
   "description": "Gestão pública de veículos, manutenção, abastecimento e custos da frota.",
   "lang": "pt-BR",
   "start_url": "/SmartFrota/?source=pwa",
   "scope": "/SmartFrota/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#082b57",
   "theme_color": "#087fe8",
   "categories": ["business", "productivity", "utilities"],
   "prefer_related_applications": false,
   "icons": [
-    {"src": "/SmartFrota/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "/SmartFrota/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "/SmartFrota/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "/SmartFrota/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/SmartFrota/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/SmartFrota/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
