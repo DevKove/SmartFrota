@@ -46,7 +46,7 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px #21a0a01c,0 5px 14p
 @keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 
-</style>
+.metric-label{display:flex;align-items:center;gap:10px;position:relative;z-index:1}.metric-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#e7f6ff,#cde8ff);color:#176bba;font-size:18px;box-shadow:inset 0 1px 0 #fff,0 5px 12px #1677d21c}.metric:nth-child(2) .metric-icon{background:linear-gradient(145deg,#fff0d7,#ffdb9a);color:#b66a00}.metric:nth-child(3) .metric-icon{background:linear-gradient(145deg,#dff9ed,#a9e9cb);color:#087d50}.metric:nth-child(4) .metric-icon{background:linear-gradient(145deg,#efe4ff,#d8c1ff);color:#7040bd}.metric-label span:last-child{font-size:13px}.metric strong{margin-left:48px}.metric>span:last-child{display:block;margin-left:48px}</style>
 </head>
 <body>
 <section id="loginView" class="login-wrap">
@@ -98,7 +98,7 @@ function logout(showMessage=true){state.token=null;state.user=null;state.profile
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
 function getCache(key){try{const item=JSON.parse(localStorage.getItem(cacheKey(key))||'null');return item?.data??null}catch{return null}}
 async function load(path,key){try{const result=await request(path);const data=result?.data??result;setCache(key,data);return data}catch(error){const cached=getCache(key);if(cached!==null){toast('Sem conexão: exibindo os últimos dados salvos neste navegador.');return cached}throw error}}
-function metric(title,value,caption){return '<article class="metric"><span>'+escapeHtml(title)+'</span><strong>'+escapeHtml(value)+'</strong><span>'+escapeHtml(caption)+'</span></article>'}
+function metric(title,value,caption){const icons={'Veículos cadastrados':'🚙','Disponíveis':'✓','Em manutenção':'🔧','Ordens abertas':'▤'};const icon=icons[title]||'◈';return '<article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">'+icon+'</span><span>'+escapeHtml(title)+'</span></div><strong>'+escapeHtml(value)+'</strong><span>'+escapeHtml(caption)+'</span></article>'}
 function table(headers,rows){if(!rows.length)return '<div class="empty">Nenhum registro encontrado.</div>';return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+escapeHtml(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
 async function renderDashboard(){
  const c=$('pageContent');c.innerHTML='<div class="eyebrow">Resumo operacional</div><h1 class="page-title">Painel de controle</h1><p class="muted">Indicadores da frota e da operação.</p><div class="cards">'+metric('Veículos cadastrados','—','Total no sistema')+metric('Disponíveis','—','Prontos para uso')+metric('Em manutenção','—','Indisponíveis temporariamente')+metric('Ordens abertas','—','Acompanhar execução')+'</div><section class="panel"><h3>Estado do sistema</h3><p class="muted" id="connectionMessage">Verificando informações do sistema…</p></section>';
