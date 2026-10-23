@@ -608,7 +608,7 @@ th{color:#243f5a;background:#e5eef8}
 <section class="nav-group" data-nav-group="gestao">
 <button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="nav-items-gestao"><span>🏛 &nbsp; Gestão pública</span><span class="nav-chevron" aria-hidden="true">⌄</span></button>
 <div class="nav-group-items" id="nav-items-gestao">
-<button data-page="budget_sheets">▤ &nbsp; Orçamento por secretaria</button><button data-page="reports" style="display:block!important;visibility:visible!important">▥ &nbsp; Relatórios</button><button data-page="users" style="display:block!important;visibility:visible!important">♙ &nbsp; Usuários e perfis</button>
+<button data-page="budget_sheets">▤ &nbsp; Orçamento por secretaria</button><button data-page="reports">▥ &nbsp; Relatórios</button><button data-page="users">♙ &nbsp; Usuários e perfis</button>
 </div></section>
 </nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div></aside>
 <div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
@@ -674,6 +674,21 @@ const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
 const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',suppliers:'Fornecedores / Prestadores',work_orders:'Ordens de serviço',maintenance_plans:'Planos de manutenção',fuel_records:'Abastecimentos',inspections:'Inspeções e checklists',incidents:'Ocorrências e sinistros',inventory_products:'Almoxarifado / Peças',contracts:'Contratos',budget_sheets:'Orçamento por secretaria',reports:'Relatórios',users:'Usuários e perfis'};
+const pagePermissions={vehicles:'vehicles:read',secretarias:'secretarias:read',drivers:'drivers:read',suppliers:'suppliers:read',work_orders:'work_orders:read',maintenance_plans:'maintenance:read',fuel_records:'fuel:read',inspections:'inspections:read',incidents:'incidents:read',inventory_products:'inventory:read',contracts:'contracts:read',budget_sheets:'finance:read',reports:'reports:read',users:'users:read'};
+const isSystemAdmin=()=>Boolean(state.profile?.roles?.includes('system_admin'));
+function canAccessPage(page){return page==='dashboard'||isSystemAdmin()||Boolean(pagePermissions[page]&&state.profile?.permissions?.includes(pagePermissions[page]));}
+function applyNavigationPermissions(){
+ document.querySelectorAll('#nav button[data-page]').forEach(button=>{
+  const visible=canAccessPage(button.dataset.page);
+  button.style.removeProperty('visibility');
+  if(visible)button.style.removeProperty('display');else button.style.setProperty('display','none','important');
+  button.setAttribute('aria-hidden',String(!visible));
+ });
+ document.querySelectorAll('#nav .nav-group').forEach(group=>{
+  const visible=[...group.querySelectorAll('button[data-page]')].some(button=>canAccessPage(button.dataset.page));
+  if(visible)group.style.removeProperty('display');else group.style.setProperty('display','none','important');
+ });
+}
 const cacheKey=key=>'frotagov-cache-user-'+(state.user?.id||'anonymous')+'-'+key;
 function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-'))localStorage.removeItem(key)}}catch{}}
 function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-')&&!key.startsWith('frotagov-cache-user-'))localStorage.removeItem(key)}}catch{}}
@@ -701,7 +716,7 @@ async function login(email,password){
  $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();
  try{await navigate('dashboard');}catch(error){$('pageContent').innerHTML='<div class="error" role="alert">Você entrou, mas o painel não carregou. Verifique sua conexão e tente atualizar os dados. Detalhe: '+escapeHtml(error?.message||'erro inesperado')+'</div>';}
 }
-async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';}
+async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';applyNavigationPermissions();}
 function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard').catch(error=>{const c=$('pageContent');if(c)c.innerHTML='<div class="error" role="alert">O painel não carregou. '+escapeHtml(error?.message||'Tente atualizar a página.')+'</div>';});}
 function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');clearUserCache();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
@@ -1029,6 +1044,11 @@ async function renderReports(){
 }
 async function renderUsers(){
  const c=$('pageContent');
+ if(!isSystemAdmin()){
+  c.innerHTML='<div class="eyebrow">Acesso e segurança</div><h1 class="page-title">Usuários e perfis</h1><p class="muted">Consulta de contas autorizadas para o seu escopo. A administração de perfis é exclusiva do administrador principal.</p><section class="panel"><div class="panel-head"><h3>Contas cadastradas</h3><button id="refreshUsers" class="secondary" type="button">Atualizar</button></div><div id="usersList" class="empty">Carregando…</div></section>';
+  const run=async()=>{try{const result=await request('/v1/users');const users=Array.isArray(result?.data)?result.data:[];$('usersList').innerHTML=table(['Nome','E-mail','Perfis','Secretarias','Situação'],users.map(u=>'<tr><td>'+escapeHtml(u.display_name||'—')+'</td><td>'+escapeHtml(u.email||'—')+'</td><td>'+escapeHtml((u.roles||[]).join(', ')||'—')+'</td><td>'+escapeHtml((u.secretaria_ids||[]).length||'Não vinculadas')+'</td><td><span class="status '+(u.is_active===false?'off':'')+'">'+(u.is_active===false?'Inativo':'Ativo')+'</span></td></tr>'));}catch(error){$('usersList').innerHTML='<div class="empty">'+escapeHtml(error.message||'Não foi possível consultar usuários.')+'</div>'}};
+  $('refreshUsers').onclick=run;await run();return;
+ }
  c.innerHTML='<div class="eyebrow">Acesso e segurança</div><h1 class="page-title">Usuários e perfis</h1><p class="muted">Gerenciamento administrativo de contas, perfis e vínculos com secretarias.</p><section class="panel"><div class="panel-head"><h3>Cadastrar usuário</h3></div><form id="createUserForm" class="form-grid"><label>Nome completo<input name="display_name" required minlength="2" maxlength="160"></label><label>E-mail institucional<input name="email" type="email" required maxlength="254"></label><label>Senha temporária (mín. 14 caracteres)<input name="temporary_password" type="password" required minlength="14" autocomplete="new-password"></label><label>Perfil<select name="role_code" id="newUserRole" required><option value="">Carregando perfis…</option></select></label><label>Secretarias autorizadas (opcional)<select name="secretaria_ids" id="newUserSecretarias" multiple size="4"></select></label><div><button type="submit">Cadastrar usuário</button></div><p id="createUserMessage" class="muted" role="status"></p></form></section><section class="panel"><div class="panel-head"><h3>Contas cadastradas</h3><button id="refreshUsers" class="secondary" type="button">Atualizar</button></div><div id="usersList" class="empty">Carregando…</div></section><section class="panel"><h3>Perfis de acesso</h3><div id="rolesList" class="empty">Consultando perfis…</div></section>';
  let users=[],roles=[],secretarias=[];
  const splitIds=v=>v.split(',').map(x=>x.trim()).filter(Boolean);
@@ -1114,6 +1134,7 @@ function renderPasswordChange(){
  });
 }
 async function navigate(page){
+ if(!canAccessPage(page)){toast('Seu perfil não possui permissão para abrir esta área.');page='dashboard';}
  if(state.profile?.must_change_password&&page!=='change_password'){renderPasswordChange();return;}
  $('nav').classList.remove('hidden');
  state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');
