@@ -1074,7 +1074,7 @@ async function renderUsers(){
  await run();
 }
 
-async function navigate(page){state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');if(page==='dashboard')await renderDashboard();else if(page==='reports')await renderReports();else if(page==='users')await renderUsers();else await renderList(page)}
+async async function navigate(page){state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');if(page==='dashboard')await renderDashboard();else if(page==='reports')await renderReports();else if(page==='users')await renderUsers();else await renderList(page)}
 $('passwordToggle').addEventListener('click',()=>{const field=$('password');const reveal=field.type==='password';field.type=reveal?'text':'password';$('passwordToggle').textContent=reveal?'Ocultar':'Mostrar';$('passwordToggle').setAttribute('aria-label',reveal?'Ocultar senha':'Revelar senha');$('passwordToggle').setAttribute('aria-pressed',String(reveal));field.focus()});
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginButton').disabled=true;$('loginError').textContent='';try{await login($('email').value.trim(),$('password').value)}catch(err){$('loginError').textContent=err.message}finally{$('loginButton').disabled=false}});
 $('logoutButton').onclick=()=>logout();$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)navigate(b.dataset.page)});$('mobileMenu').onclick=()=>$('sidebar').classList.toggle('open');
