@@ -1068,7 +1068,29 @@ async function renderList(key){
    const section=ev.target.closest('[data-section-export]');
    if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'smartfrota-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
    const all=ev.target.closest('[data-workspace-export]');if(!all)return;
-   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
+   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script>
+<style id="smartfrota-sidebar-accessibility-fix">
+/* Menu lateral: itens nunca ficam comprimidos nem atrás do brasão */
+#appView .sidebar{box-sizing:border-box;min-height:0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow:hidden;gap:14px}
+#appView .sidebar .sidebrand{flex:0 0 auto}
+#appView .sidebar .nav{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;align-items:stretch;flex:1 1 0;min-height:0;max-height:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:rgba(151,205,242,.55) rgba(255,255,255,.06);padding:0 3px 10px 0}
+#appView .sidebar .nav>button,#appView .sidebar .nav>.nav-group{min-width:0;flex-shrink:0}
+#appView .sidebar .nav>.nav-group{align-self:start}
+#appView .sidebar .nav .nav-group-items{grid-auto-rows:max-content;align-content:start}
+#appView .sidebar .nav .nav-group-items button{min-height:38px}
+#appView .sidebar-logo-bottom{flex:0 0 auto;margin-top:0}
+#appView .sidebar .nav::-webkit-scrollbar{width:7px}
+#appView .sidebar .nav::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:8px}
+#appView .sidebar .nav::-webkit-scrollbar-thumb{background:rgba(151,205,242,.45);border-radius:8px}
+@media(max-width:900px){
+ #appView .sidebar{display:none;position:fixed;top:0;bottom:0;left:0;right:auto;width:min(300px,86vw);height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;z-index:20;padding-bottom:0}
+ #appView .sidebar.open{display:flex}
+ #appView .sidebar .nav{flex:1 1 0;min-height:0}
+ #appView .sidebar-logo-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+}
+</style>
+
+</body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
    const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
    if(!flat.length){message.textContent='Não há registros para exportar.';return}
    if(all.dataset.workspaceExport==='json'){exportRows(flat,'json','smartfrota-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10));message.textContent='Arquivo JSON preparado.';return}
