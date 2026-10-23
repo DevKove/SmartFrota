@@ -651,7 +651,10 @@ const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
 const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',suppliers:'Fornecedores / Prestadores',work_orders:'Ordens de serviço',maintenance_plans:'Planos de manutenção',fuel_records:'Abastecimentos',inspections:'Inspeções e checklists',incidents:'Ocorrências e sinistros',inventory_products:'Almoxarifado / Peças',contracts:'Contratos',budget_sheets:'Orçamento por secretaria',reports:'Relatórios',users:'Usuários e perfis'};
-const cacheKey=key=>'frotagov-cache-'+key;
+const cacheKey=key=>'frotagov-cache-user-'+(state.user?.id||'anonymous')+'-'+key;
+function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-'))localStorage.removeItem(key)}}catch{}}
+function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-')&&!key.startsWith('frotagov-cache-user-'))localStorage.removeItem(key)}}catch{}}
+clearLegacyCache();
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),4200)}
 function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
 async function request(path,options={}) {
@@ -661,7 +664,7 @@ async function request(path,options={}) {
  const response=await fetch(API+path,{...options,headers});
  if(response.status===204)return null;
  const data=await response.json().catch(()=>({error:{message:'Resposta inválida do servidor.'}}));
- if(!response.ok){const serverMessage=data?.error?.message||data?.message;if(response.status===401&&requestToken&&state.token===requestToken){logout(false);throw new Error(serverMessage||'Sua sessão expirou. Entre novamente.')}throw new Error(serverMessage||('Falha na API (HTTP '+response.status+'). Verifique sua conexão e tente novamente.'))}
+ if(!response.ok){const serverMessage=data?.error?.message||data?.message;const error=new Error(serverMessage||(response.status===401?'Sua sessão expirou. Entre novamente.':'Falha na API (HTTP '+response.status+'). Verifique sua conexão e tente novamente.'));error.status=response.status;if(response.status===401&&requestToken&&state.token===requestToken)logout(false);throw error}
  return data;
 }
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -677,10 +680,10 @@ async function login(email,password){
 }
 async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';}
 function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard').catch(error=>{const c=$('pageContent');if(c)c.innerHTML='<div class="error" role="alert">O painel não carregou. '+escapeHtml(error?.message||'Tente atualizar a página.')+'</div>';});}
-function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
+function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');clearUserCache();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
 function getCache(key){try{const item=JSON.parse(localStorage.getItem(cacheKey(key))||'null');return item?.data??null}catch{return null}}
-async function load(path,key){try{const result=await request(path);const data=result?.data??result;setCache(key,data);return data}catch(error){const cached=getCache(key);if(cached!==null){toast('Sem conexão: exibindo os últimos dados salvos neste navegador.');return cached}throw error}}
+async function load(path,key){try{const result=await request(path);const data=result?.data??result;setCache(key,data);return data}catch(error){if(error?.status)throw error;const cached=getCache(key);if(cached!==null){toast('Sem conexão: exibindo os últimos dados salvos desta conta.');return cached}throw error}}
 function metric(title,value,caption){const icons={'Veículos cadastrados':'🚙','Disponíveis':'✓','Em manutenção':'🔧','Ordens abertas':'▤'};const icon=icons[title]||'◈';return '<article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">'+icon+'</span><span>'+escapeHtml(title)+'</span></div><strong>'+escapeHtml(value)+'</strong><span>'+escapeHtml(caption)+'</span></article>'}
 function table(headers,rows){if(!rows.length)return '<div class="empty">Nenhum registro encontrado.</div>';return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+escapeHtml(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
 async function renderDashboard(){
