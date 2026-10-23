@@ -128,6 +128,30 @@ body:has(.login-wrap){min-height:100%;background:#061f3e!important;overflow-x:hi
 .login-legal-footer a{color:#d7eaff;text-decoration:underline;text-underline-offset:3px}
 .login-legal-footer a:hover{color:#fff}
 @media(max-width:900px){#loginView{padding-bottom:86px}.login-legal-footer{gap:8px 18px;padding:14px 12px;background:#061f3e66}}
+
+/* Login: unifica o cartão de autenticação com a moldura translúcida do painel informativo */
+.login-card{
+  color:#eef7ff!important;
+  background:linear-gradient(145deg,rgba(3,26,53,.84),rgba(4,45,79,.58))!important;
+  border:1px solid rgba(255,255,255,.22)!important;
+  border-radius:18px!important;
+  box-shadow:0 28px 75px rgba(0,10,28,.42),inset 0 1px 0 rgba(255,255,255,.10)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+.login-card h2{color:#fff!important}
+.login-card .muted,.login-card .notice{color:#c8dff4!important}
+.login-card label{color:#e8f4ff!important}
+.login-card input,.login-card select,.login-card textarea{
+  color:#102b50!important;background:rgba(248,252,255,.97)!important;
+  border:1px solid rgba(180,216,245,.7)!important;
+}
+.login-card input::placeholder{color:#6a829b!important}
+.login-card input:focus{outline:3px solid rgba(74,184,255,.25)!important;border-color:#63c6ff!important}
+.login-card .eyebrow{color:#78caff!important}
+.login-card .error{color:#ffb9b9!important}
+.login-card .notice a,.login-card a{color:#8ed5ff!important}
+
 </style>
 </head>
 <body>
