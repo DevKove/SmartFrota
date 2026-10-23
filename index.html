@@ -354,6 +354,30 @@ th{color:#243f5a;background:#e5eef8}
 #pageContent .panel .muted,
 #pageContent .metric .muted{color:#334e68!important;text-shadow:none!important;}
 
+
+/* Visualização em cards exclusiva para Secretarias */
+.secretaria-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;padding:4px 0}
+.secretaria-card{--dept:#1769aa;--dept-bg:#eaf4ff;display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:180px;width:100%;padding:20px!important;text-align:left!important;white-space:normal!important;color:#17324f!important;background:linear-gradient(145deg,#fff,var(--dept-bg))!important;border:1px solid #dce8f5!important;border-radius:17px!important;box-shadow:0 8px 22px #102b5010!important;position:relative;overflow:hidden}
+.secretaria-card:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--dept)}
+.secretaria-card:hover{transform:translateY(-3px);box-shadow:0 15px 30px #102b5020!important;border-color:var(--dept)!important}
+.secretaria-card-top{display:flex;align-items:center;gap:12px;width:100%;position:relative}
+.secretaria-card-icon{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border-radius:14px;background:var(--dept);color:#fff;font-size:24px}
+.secretaria-card-sigla{font-size:11px;letter-spacing:1.2px;font-weight:850;color:var(--dept)}
+.secretaria-card-name{font-size:16px;font-weight:850;line-height:1.3;color:#102b50;overflow-wrap:anywhere}
+.secretaria-card-meta{font-size:12px;color:#4b627b;line-height:1.5}
+.secretaria-card-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;font-size:12px;color:var(--dept);font-weight:800}
+.secretaria-detail{background:#fff;border:1px solid #dce8f5;border-radius:16px;overflow:hidden}
+.secretaria-detail-head{padding:24px;color:#fff;background:linear-gradient(120deg,var(--dept,#1769aa),#061f3e);display:flex;align-items:center;gap:16px}
+.secretaria-detail-icon{width:62px;height:62px;display:grid;place-items:center;flex:0 0 62px;border-radius:17px;background:#ffffff24;border:1px solid #ffffff55;font-size:30px}
+.secretaria-detail-head h2{margin:0;font-size:clamp(20px,3vw,28px);overflow-wrap:anywhere}
+.secretaria-detail-head p{margin:4px 0 0;color:#e7f3ff}
+.secretaria-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;padding:20px}
+.secretaria-detail-field{padding:14px;border:1px solid #e3ebf4;background:#f8fbff;border-radius:11px;min-width:0}
+.secretaria-detail-field small{display:block;color:#58718c;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.secretaria-detail-field div{font-weight:650;color:#17324f;overflow-wrap:anywhere;white-space:pre-wrap}
+.secretaria-detail-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 20px 20px}
+@media(max-width:520px){.secretaria-cards{grid-template-columns:1fr}.secretaria-detail-head{padding:18px;align-items:flex-start}}
+
 </style>
 </head>
 <body>
@@ -487,15 +511,49 @@ async function renderList(key){
   }
   return true;
  }
+ function secretariaVisual(item){
+  const txt=norm([item.sigla,item.nome,item.descricao].filter(Boolean).join(' '));
+  const defs=[
+   {match:/saude|medic|hospital|vigilancia sanitaria/,icon:'✚',color:'#0b8b78',bg:'#e7f8f3'},
+   {match:/educa|escola|ensino|creche/,icon:'🎓',color:'#6d4acb',bg:'#f0ebff'},
+   {match:/seguranca|guarda|policia|transito|mobilidade/,icon:'🛡',color:'#1769aa',bg:'#eaf4ff'},
+   {match:/obras|infraestrutura|engenharia|servicos urbanos/,icon:'🏗',color:'#b66a12',bg:'#fff4df'},
+   {match:/meio ambiente|ambiental|agricultura|rural/,icon:'🌿',color:'#2b7a3d',bg:'#eaf7e9'},
+   {match:/administracao|governo|gabinete|gestao/,icon:'🏛',color:'#425b76',bg:'#edf2f7'},
+   {match:/fazenda|financas|tribut|orcamento/,icon:'💼',color:'#a33c76',bg:'#fcecf4'},
+   {match:/assistencia social|social|habitacao/,icon:'🤝',color:'#b14f79',bg:'#fff0f5'},
+   {match:/esporte|lazer|cultura|turismo/,icon:'🎭',color:'#a34e20',bg:'#fff0e7'}
+  ];
+  const found=defs.find(d=>d.match.test(txt));if(found)return found;
+  const palette=[['#1769aa','#eaf4ff','🏢'],['#0b8b78','#e7f8f3','🌐'],['#6d4acb','#f0ebff','📋'],['#b66a12','#fff4df','⚙'],['#2b7a3d','#eaf7e9','🏛']];
+  let hash=0;for(const ch of String(item.sigla||item.nome||'S'))hash=(hash*31+ch.charCodeAt(0))>>>0;
+  return{color:palette[hash%palette.length][0],bg:palette[hash%palette.length][1],icon:palette[hash%palette.length][2]};
+ }
+ function secretariaDetails(item){
+  const visual=secretariaVisual(item),admin=state.profile?.roles?.includes('system_admin');
+  const labels={id:'Identificador',nome:'Nome da secretaria',sigla:'Sigla',status:'Situação',responsavel_nome:'Responsável',responsavel_cargo:'Cargo do responsável',telefone_institucional:'Telefone institucional',email_institucional:'E-mail institucional',centro_custo:'Centro de custo',codigo_orcamentario:'Código orçamentário',descricao:'Descrição',created_at:'Data de cadastro',updated_at:'Última atualização',secretaria_id:'Secretaria vinculada'};
+  const fields=Object.entries(item).filter(([k,v])=>v!==null&&v!==undefined&&v!=='').map(([k,v])=>{
+   let value=v;
+   if(typeof v==='object')value=JSON.stringify(v,null,2);
+   if(/_at$/.test(k)){const d=new Date(v);if(!Number.isNaN(d.getTime()))value=d.toLocaleString('pt-BR')}
+   const label=labels[k]||k.replace(/_/g,' ').replace(/(^| )([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+   return '<div class="secretaria-detail-field"><small>'+escapeHtml(label)+'</small><div>'+escapeHtml(String(value))+'</div></div>';
+  }).join('');
+  $('listContent').innerHTML='<article class="secretaria-detail" style="--dept:'+visual.color+'"><header class="secretaria-detail-head"><div class="secretaria-detail-icon" aria-hidden="true">'+visual.icon+'</div><div><h2>'+escapeHtml(item.nome||'Secretaria')+'</h2><p>'+escapeHtml(item.sigla||'Sem sigla')+' · '+escapeHtml(item.status||'Situação não informada')+'</p></div></header><div class="secretaria-detail-grid">'+fields+'</div><div class="secretaria-detail-actions"><button type="button" class="secondary secretaria-back">← Voltar às secretarias</button>'+(admin?'<button type="button" class="secretaria-edit" data-id="'+escapeHtml(item.id)+'">Editar secretaria</button>':'')+'</div></article>';
+ }
  function draw(){
-  const filtered=allRows.filter(matches),canEditSecretarias=key==='secretarias'&&state.profile?.roles?.includes('system_admin');
+  const filtered=allRows.filter(matches);
   $('filterCount').textContent=filtered.length+' de '+allRows.length+' registro(s)';
-  $('listContent').innerHTML=table(canEditSecretarias?[...cfg.headers,'Ações']:cfg.headers,filtered.map(x=>'<tr>'+cfg.cells(x).map(v=>'<td>'+escapeHtml(v??'—')+'</td>').join('')+(canEditSecretarias?'<td><button type="button" class="secondary secretaria-edit" data-id="'+escapeHtml(x.id)+'">Editar</button></td>':'')+'</tr>'));
+  if(key==='secretarias'){
+   $('listContent').innerHTML=filtered.length?'<div class="secretaria-cards">'+filtered.map(x=>{const v=secretariaVisual(x);return '<button type="button" class="secretaria-card" style="--dept:'+v.color+';--dept-bg:'+v.bg+'" data-secretaria-id="'+escapeHtml(x.id)+'" aria-label="Abrir detalhes da secretaria '+escapeHtml(x.nome||x.sigla||'')+'"><span class="secretaria-card-top"><span class="secretaria-card-icon" aria-hidden="true">'+v.icon+'</span><span><span class="secretaria-card-sigla">'+escapeHtml(x.sigla||'SECRETARIA')+'</span><span class="secretaria-card-name" style="display:block">'+escapeHtml(x.nome||'Secretaria sem nome')+'</span></span></span><span class="secretaria-card-meta">'+escapeHtml(x.responsavel_nome?'Responsável: '+x.responsavel_nome:'Responsável não informado')+'</span><span class="secretaria-card-foot"><span>'+escapeHtml(x.status||'Situação não informada')+'</span><span>Ver detalhes →</span></span></button>'}).join('')+'</div>':'<div class="empty">Nenhuma secretaria encontrada com os filtros atuais.</div>';
+   return;
+  }
+  $('listContent').innerHTML=table(cfg.headers,filtered.map(x=>'<tr>'+cfg.cells(x).map(v=>'<td>'+escapeHtml(v??'—')+'</td>').join('')+'</tr>'));
  }
  const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);allRows=Array.isArray(rows)?rows:[];setupFilters();draw()}catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>';$('filterCount').textContent='Não foi possível carregar os registros.'}};
  $('refreshBtn').onclick=run;
  $('newBtn').onclick=()=>showCreateForm(key);
- $('listContent').addEventListener('click',e=>{const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');const item=allRows.find(x=>x.id===btn.dataset.id);if(item)showEditSecretaria(item,run)});
+ $('listContent').addEventListener('click',e=>{const card=e.target.closest('[data-secretaria-id]');if(card&&key==='secretarias'){const item=allRows.find(x=>String(x.id)===card.dataset.secretariaId);if(item)secretariaDetails(item);return}if(e.target.closest('.secretaria-back')){draw();return}const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');const item=allRows.find(x=>String(x.id)===btn.dataset.id);if(item)showEditSecretaria(item,run)});
  $('applyFilters').onclick=draw;
  $('clearFilters').onclick=()=>{['filterSearch','filterValue','filterStatus','filterDateFrom','filterDateTo','filterField'].forEach(id=>$(id).value='');document.querySelectorAll('#filterContext input,#filterContext select').forEach(el=>el.value='');draw()};
  $('filterGrid').addEventListener('input',e=>{if(e.target.matches('input'))draw()});
