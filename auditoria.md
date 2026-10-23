@@ -19,10 +19,10 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Frontend:** aplicação estática em index.html, HTML/CSS/JavaScript sem package.json na raiz.
 - **Hospedagem do frontend:** GitHub Pages, base /SmartFrota/.
 - **PWA:** manifest.webmanifest e service-worker.js.
-- **API:** Supabase Edge Function frotagov-api, versão ativa 16, verify_jwt=false; a função valida o token Bearer manualmente com Supabase Auth antes de acessar rotas protegidas.
+- **API:** Supabase Edge Function frotagov-api, versão ativa 17, verify_jwt=false; a função valida o token Bearer manualmente com Supabase Auth antes de acessar rotas protegidas.
 - **Banco:** PostgreSQL 17 no projeto Supabase SmartFrota (jyfphgnysvsrqdlbogoh).
 - **Autenticação:** Supabase Auth; o frontend mantém a sessão em sessionStorage.
-- **Recursos API identificados:** vehicles, secretarias, drivers, users, suppliers, work_orders, maintenance_plans, fuel_records, inspections, incidents, inventory_products, contracts e budget_sheets; rotas adicionais de autenticação, resumo do painel e consulta de perfis.
+- **Recursos API identificados:** vehicles, secretarias, drivers, users, suppliers, work_orders, maintenance_plans, fuel_records, inspections, incidents, inventory_products, contracts, budget_sheets, financial_transactions, inventory_movements e vehicle_documents; os três últimos recursos estão disponíveis somente para consulta na área de secretaria.
 - **Modelagem observada:** 28 tabelas públicas, 7 perfis e 44 permissões. A consulta de metadados indicou 2 perfis de usuário cadastrados e ativos; nenhum dado identificável foi incluído neste relatório.
 - **Migrações registradas no Supabase:** 001_initial_schema, 002_operations, 003_auth, 004_sync_changes, 005_api_only_access e três migrações posteriores de vínculo de administrador e escopo por secretaria.
 
@@ -65,7 +65,8 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 11. Logs da versão 15 registraram HTTP 500 em consultas a recursos operacionais. A inspeção do esquema confirmou ausência de deleted_at em dez tabelas e de updated_at em algumas delas.
 12. Aplicada migração aditiva 20261023201201_align_api_resource_columns. A consulta posterior confirmou deleted_at/updated_at/created_at nos recursos que a API espera; não foram apagados registros.
 13. Edge Function atualizada para versão 16; foram adicionadas rotas de consulta somente leitura para financial_transactions, inventory_movements e vehicle_documents, com checagem de permissão e filtro por secretaria/veículos autorizados.
-14. O código-fonte da função e a migração foram sincronizados no GitHub. Nenhuma requisição foi registrada ainda para a versão 16 no momento da checagem; o teste runtime pós-deploy continua pendente.
+14. Após identificar caminhos que poderiam deixar uma conta parcialmente criada se a atribuição de perfil ou secretaria falhasse, foi implementada limpeza compensatória da conta Auth, perfil, perfis e vínculos antes de retornar erro. A função foi implantada como versão 17.
+15. O código-fonte da função e as migrações foram sincronizados no GitHub. Não havia requisições registradas para a versão 16 ou 17 no momento das verificações; o teste runtime pós-deploy continua pendente.
 
 **Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede. Por isso, não afirmo que node scripts/validate-inline-js.mjs, o navegador, o build ou o GitHub Actions foram executados com sucesso. A validação isolada acima não substitui o pipeline real.
 
@@ -96,8 +97,11 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 ### P2 — Proteção contra senhas comprometidas desabilitada
 O advisor de Auth recomenda habilitar a proteção contra senhas vazadas. Não alterei configuração de Auth nesta etapa, pois a mudança precisa ser validada com a política de senha e o fluxo de acesso institucional.
 
-### P2 — Criação de usuários pode deixar estado parcial em falhas intermediárias
-Na Edge Function, o fluxo cria a conta de Auth e o perfil antes de concluir a atribuição de perfis e vínculos com secretarias. Se uma operação posterior falhar, alguns caminhos retornam erro sem compensar todas as gravações anteriores. Recomenda-se tornar o fluxo compensatório/transacional e testar falhas simuladas em ambiente isolado antes de alterar a função de produção.
+### SF-API-002 — Criação de usuários com falha parcial
+- **Severidade:** P2 (integridade de cadastro).
+- **Causa:** a criação de Auth, perfil, atribuição de perfil e vínculos de secretaria ocorria em etapas; alguns erros intermediários deixavam registros órfãos.
+- **Correção:** implementada função de limpeza compensatória que remove vínculos, perfis associados e conta Auth se a configuração da conta falhar. Implantada na Edge Function versão 17.
+- **Status:** correção estática e implantação confirmadas; teste de falha induzida bloqueado até haver ambiente de teste isolado.
 
 ### P2 — Logout local não demonstra revogação do token no servidor
 O frontend limpa a sessão local, enquanto a rota /v1/auth/logout da função retorna 204 sem revogar explicitamente a sessão Supabase. Isso não prova uma exploração ativa, mas deixa a revogação remota não demonstrada caso um token seja copiado. Avaliar e testar uma estratégia segura de revogação sem derrubar sessões de outros dispositivos.
@@ -114,17 +118,17 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 ## 7. Próximas etapas obrigatórias
 
 1. Confirmar no GitHub Actions o resultado da validação após os commits. O status consultado ainda não retornou checks associados aos commits.
-2. Recarregar o sistema e confirmar que a versão 16 da API retorna 200 para as listas com esquema corrigido e para as três rotas adicionais.
-2. Executar os principais fluxos em navegador: login válido/inválido, restauração de sessão, logout, troca de senha, cada perfil e navegação por menu.
-3. Criar usuários fictícios em ambiente isolado para validar permissões e isolamento entre secretarias.
-4. Testar CRUD positivo/negativo de cada recurso, validações, conflitos de versão, persistência após recarregar e respostas 4xx/5xx.
-5. Corrigir e testar o tratamento de falhas parciais na criação de usuários.
-6. Revisar revogação de sessões e ativação da proteção contra senhas comprometidas.
-7. Revisar os 37 índices de FK com planos de execução e volume representativo; não remover índices sem evidência.
-8. Testar exportações, responsividade, acessibilidade, service worker offline e recuperação de conexão.
-9. Testar backup/restauração em ambiente isolado e documentar rollback.
-10. Atualizar esta matriz com os resultados E2E, logs sanitizados, quantidades reais de testes e evidências.
+2. Recarregar o sistema e confirmar que a versão 17 da API retorna os resultados esperados para listas com esquema corrigido e para as três rotas adicionais.
+3. Executar os principais fluxos em navegador: login válido/inválido, restauração de sessão, logout, troca de senha, cada perfil e navegação por menu.
+4. Criar usuários fictícios em ambiente isolado para validar permissões e isolamento entre secretarias.
+5. Testar CRUD positivo/negativo de cada recurso, validações, conflitos de versão, persistência após recarregar e respostas 4xx/5xx.
+6. Testar a limpeza compensatória com falhas induzidas no cadastro em ambiente isolado.
+7. Revisar revogação de sessões e ativação da proteção contra senhas comprometidas.
+8. Revisar os 37 índices de FK com planos de execução e volume representativo; não remover índices sem evidência.
+9. Testar exportações, responsividade, acessibilidade, service worker offline e recuperação de conexão.
+10. Testar backup/restauração em ambiente isolado e documentar rollback.
+11. Atualizar esta matriz com os resultados E2E, logs sanitizados, quantidades reais de testes e evidências.
 
 ## 8. Conclusão
 
-O trabalho executado encontrou e corrigiu a visibilidade do menu, aplicou a migração de compatibilidade e implantou a API versão 16 com as rotas adicionais. A auditoria **não está concluída**: autenticação real, CRUD completo, isolamento entre secretarias, runtime pós-deploy, publicação no navegador, recuperação de backup e fluxos operacionais ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
+O trabalho executado encontrou e corrigiu a visibilidade do menu, aplicou a migração de compatibilidade e implantou a API versão 17 com as rotas adicionais e limpeza compensatória no cadastro de usuários. A auditoria **não está concluída**: autenticação real, CRUD completo, isolamento entre secretarias, runtime pós-deploy, publicação no navegador, recuperação de backup e fluxos operacionais ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
