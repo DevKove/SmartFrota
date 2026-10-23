@@ -59,7 +59,7 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px #21a0a01c,0 5px 14p
 </section>
 <section id="appView" class="shell hidden">
 <aside id="sidebar" class="sidebar"><div class="sidebrand">SmartFrota <small>GESTÃO PÚBLICA</small></div><nav class="nav" id="nav">
-<button class="active" data-page="dashboard">▦ &nbsp; Visão geral</button><button data-page="vehicles">▣ &nbsp; Veículos</button><button data-page="secretarias">▤ &nbsp; Secretarias</button><button data-page="drivers">♙ &nbsp; Condutores</button>
+<button class="active" data-page="dashboard">▦ &nbsp; Visão geral</button><button data-page="vehicles">▣ &nbsp; Veículos</button><button data-page="secretarias">▤ &nbsp; Secretarias</button><button data-page="drivers">♙ &nbsp; Condutores</button><button data-page="reports">▥ &nbsp; Relatórios</button><button data-page="users">♙ &nbsp; Usuários e perfis</button>
 </nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div></aside>
 <div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
 <main id="pageContent" class="content"></main></div></section>
@@ -71,7 +71,7 @@ const API='https://jyfphgnysvsrqdlbogoh.supabase.co/functions/v1/frotagov-api';
 const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
-const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores'};
+const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',reports:'Relatórios',users:'Usuários e perfis'};
 const cacheKey=key=>'frotagov-cache-'+key;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),4200)}
 function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
@@ -123,7 +123,49 @@ function showCreateForm(key){
  $('cancelForm').onclick=()=>panel.classList.add('hidden');
  $('recordForm').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('button[type=submit]');button.disabled=true;try{const body=Object.fromEntries(new FormData(e.currentTarget).entries());Object.keys(body).forEach(k=>{if(body[k]==='')delete body[k]});for(const k of ['model_year','manufacture_year','current_odometer_km'])if(body[k]!==undefined)body[k]=Number(body[k]);if(key==='vehicles')body.status='active';else body.status='ativa';await request('/v1/'+key,{method:'POST',body:JSON.stringify(body)});localStorage.removeItem(cacheKey(key));toast('Cadastro salvo com sucesso.');navigate(key)}catch(err){toast('Não foi possível salvar o cadastro. Confira os campos e tente novamente.')}finally{button.disabled=false}}
 }
-async function navigate(page){state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');if(page==='dashboard')await renderDashboard();else await renderList(page)}
+
+function downloadCsv(filename,rows){
+ const csv=rows.map(row=>row.map(v=>{const s=String(v??'');return '"'+s.replace(/"/g,'""')+'"'}).join(';')).join('\r\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+async function renderReports(){
+ const c=$('pageContent');
+ c.innerHTML='<div class="eyebrow">Gestão e acompanhamento</div><h1 class="page-title">Relatórios</h1><p class="muted">Consulte os registros disponíveis e exporte os dados para planilhas.</p><div class="cards">'+metric('Veículos','—','Registros cadastrados')+metric('Secretarias','—','Unidades administrativas')+metric('Condutores','—','Registros de condutores')+metric('Gerado em',new Date().toLocaleDateString('pt-BR'),'Data da consulta')+'</div><section class="panel"><div class="panel-head"><h3>Exportar relatórios</h3></div><p class="muted">Escolha um conjunto de dados para baixar em CSV, compatível com Excel e LibreOffice.</p><div class="actions"><button data-export="vehicles">Exportar veículos</button><button data-export="secretarias">Exportar secretarias</button><button data-export="drivers">Exportar condutores</button><button class="secondary" id="exportAll">Exportar resumo geral</button></div><div id="reportMessage" class="notice" role="status"></div></section><section class="panel"><h3>Resumo da frota</h3><div id="reportTable" class="empty">Carregando dados para relatório…</div></section>';
+ const datasets={};
+ async function fetchRows(key){const data=await load('/v1/'+key,key);return Array.isArray(data)?data:[]}
+ try{
+  for(const key of ['vehicles','secretarias','drivers']){try{datasets[key]=await fetchRows(key)}catch{datasets[key]=[]}}
+  const counts=[datasets.vehicles.length,datasets.secretarias.length,datasets.drivers.length];
+  c.querySelectorAll('.metric strong').forEach((el,i)=>{if(i<3)el.textContent=counts[i]});
+  const headers=['Tipo','Identificação','Detalhe','Situação'];
+  const rows=[];
+  datasets.vehicles.forEach(x=>rows.push(['Veículo',x.fleet_number,[x.make,x.model,x.plate].filter(Boolean).join(' / '),x.status]));
+  datasets.secretarias.forEach(x=>rows.push(['Secretaria',x.sigla,x.nome,x.status]));
+  datasets.drivers.forEach(x=>rows.push(['Condutor',x.employee_number,x.full_name,x.status]));
+  $('reportTable').innerHTML=table(headers,rows.map(row=>'<tr>'+row.map(v=>'<td>'+escapeHtml(v||'—')+'</td>').join('')+'</tr>'));
+  c.querySelectorAll('[data-export]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.export;const data=datasets[key]||[];if(!data.length){$('reportMessage').textContent='Não há registros disponíveis para exportar.';return}const cols=Object.keys(data[0]);downloadCsv('smartfrota-'+key+'-'+new Date().toISOString().slice(0,10)+'.csv',[cols,...data.map(x=>cols.map(k=>x[k]))]);$('reportMessage').textContent='Arquivo preparado para download.'});
+  $('exportAll').onclick=()=>{const flat=[['Tipo','Identificação','Detalhe','Situação'],...rows];downloadCsv('smartfrota-resumo-'+new Date().toISOString().slice(0,10)+'.csv',flat);$('reportMessage').textContent='Resumo exportado.'};
+ }catch{$('reportTable').innerHTML='<div class="empty">Não foi possível montar o relatório. Tente novamente quando a conexão estiver disponível.</div>'}
+}
+async function renderUsers(){
+ const c=$('pageContent');
+ c.innerHTML='<div class="eyebrow">Acesso e segurança</div><h1 class="page-title">Usuários e perfis</h1><p class="muted">Área de administração de acessos e permissões.</p><section class="panel"><div class="panel-head"><h3>Contas cadastradas</h3><button id="refreshUsers" class="secondary" type="button">Atualizar</button></div><div id="usersList" class="empty">Carregando…</div></section><section class="panel"><h3>Perfis de acesso</h3><p class="muted">As permissões são aplicadas pelo sistema conforme o perfil autorizado. Para evitar alterações indevidas, a gestão de contas depende das permissões administrativas configuradas no servidor.</p><div id="rolesList" class="empty">Consultando perfis disponíveis…</div></section>';
+ async function run(){
+  $('usersList').innerHTML='<div class="empty">Carregando contas…</div>';
+  try{
+   const data=await request('/v1/users'),rows=Array.isArray(data)?data:(data?.data||data?.users||[]);
+   $('usersList').innerHTML=table(['Nome','E-mail','Perfil','Situação'],rows.map(u=>'<tr><td>'+escapeHtml(u.display_name||u.full_name||u.name||'—')+'</td><td>'+escapeHtml(u.email||'—')+'</td><td>'+escapeHtml(u.role_name||u.role_code||u.role||'—')+'</td><td><span class="status '+(u.is_active===false?'off':'')+'">'+(u.is_active===false?'Inativo':'Ativo')+'</span></td></tr>'));
+  }catch{$('usersList').innerHTML='<div class="empty">A consulta de usuários ainda não está disponível nesta versão. Nenhuma permissão foi alterada.</div>'}
+  try{
+   const data=await request('/v1/roles'),rows=Array.isArray(data)?data:(data?.data||data?.roles||[]);
+   $('rolesList').innerHTML=table(['Perfil','Descrição'],rows.map(r=>'<tr><td>'+escapeHtml(r.name||r.role_name||r.code||r.role_code||'—')+'</td><td>'+escapeHtml(r.description||r.label||'Permissões definidas pelo administrador')+'</td></tr>'));
+  }catch{$('rolesList').innerHTML='<div class="empty">Os perfis são aplicados pelo sistema; a listagem detalhada depende da configuração administrativa do servidor.</div>'}
+ }
+ $('refreshUsers').onclick=run;await run();
+}
+
+async function navigate(page){state.page=page;$('pageHeading').textContent=labels[page]||'SmartFrota';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('sidebar').classList.remove('open');if(page==='dashboard')await renderDashboard();else if(page==='reports')await renderReports();else if(page==='users')await renderUsers();else await renderList(page)}
 $('passwordToggle').addEventListener('click',()=>{const field=$('password');const reveal=field.type==='password';field.type=reveal?'text':'password';$('passwordToggle').textContent=reveal?'Ocultar':'Mostrar';$('passwordToggle').setAttribute('aria-label',reveal?'Ocultar senha':'Revelar senha');$('passwordToggle').setAttribute('aria-pressed',String(reveal));field.focus()});
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginButton').disabled=true;$('loginError').textContent='';try{await login($('email').value.trim(),$('password').value)}catch(err){$('loginError').textContent=err.message}finally{$('loginButton').disabled=false}});
 $('logoutButton').onclick=()=>logout();$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)navigate(b.dataset.page)});$('mobileMenu').onclick=()=>$('sidebar').classList.toggle('open');
