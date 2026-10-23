@@ -113,6 +113,14 @@ button{border-radius:8px}
 .sidebrand-mark img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;border:0!important;border-radius:22px!important;background:transparent!important}
 .sidebrand-copy{display:block!important;font-size:20px!important;font-weight:850!important;line-height:1.15!important;text-align:center!important}
 .sidebrand-copy small{display:block!important;margin-top:5px!important;font-size:10px!important;letter-spacing:2px!important;color:#a8d6ff!important}
+
+/* Correção da faixa inferior na tela de login: fundo contínuo até a altura dinâmica da janela */
+html{min-height:100%;background:#061f3e}
+body:has(.login-wrap){min-height:100%;background:#061f3e!important;overflow-x:hidden}
+.login-wrap{min-height:100vh;min-height:100dvh;background-color:#061f3e!important}
+@supports not (height:100dvh){.login-wrap{min-height:100vh}}
+@media(max-width:900px){.login-wrap{min-height:100vh;min-height:100dvh;padding-bottom:18px}}
+
 </style>
 </head>
 <body>
