@@ -580,6 +580,109 @@ th{color:#243f5a;background:#e5eef8}
 @media(max-width:900px){#loginView .login-institutional-contact{position:relative;left:auto;right:auto;bottom:auto;grid-column:1/-1;margin:0 0 88px;padding:10px 12px;flex-direction:column;align-items:center;gap:4px}#loginView{padding-bottom:18px}}
 @media(max-width:520px){#loginView .login-institutional-contact{font-size:11px;overflow-wrap:anywhere}#loginView .login-institutional-contact span{overflow-wrap:anywhere}}
 </style>
+
+<style id="smartfrota-glass-theme">
+/* Tema global alinhado à tela de login: fundo fotográfico, camadas azuis e superfícies translúcidas */
+#appView.shell{
+  position:relative;
+  isolation:isolate;
+  min-height:100vh;
+  background:
+    linear-gradient(115deg,rgba(3,18,39,.84) 0%,rgba(5,37,68,.72) 42%,rgba(6,54,83,.56) 100%),
+    url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=2000&q=85') center/cover fixed no-repeat;
+}
+#appView.shell:before{
+  content:"";
+  position:fixed;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse at 12% 8%,rgba(35,132,190,.26),transparent 42%),
+             radial-gradient(ellipse at 92% 88%,rgba(22,166,232,.18),transparent 38%);
+}
+#appView .main{background:transparent;min-height:100vh}
+#appView .topbar{
+  background:rgba(240,248,255,.78);
+  border-bottom:1px solid rgba(255,255,255,.45);
+  box-shadow:0 8px 28px rgba(0,20,45,.12);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+}
+#appView .topbar h2{color:#082b50}
+#appView .topbar .eyebrow{color:#356486}
+#appView .content{
+  min-height:calc(100vh - 64px);
+  background:linear-gradient(145deg,rgba(230,242,255,.20),rgba(235,247,255,.08));
+}
+#appView .metric,
+#appView .panel,
+#appView .card,
+#appView .modal,
+#appView .modal-content,
+#appView .dialog,
+#appView .form-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(244,250,255,.76));
+  border:1px solid rgba(255,255,255,.68);
+  box-shadow:0 18px 48px rgba(0,22,48,.17),inset 0 1px 0 rgba(255,255,255,.85);
+  backdrop-filter:blur(16px) saturate(135%);
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+}
+#appView .metric:before,#appView .panel:before{display:block;opacity:.8}
+#appView .metric:hover,#appView .panel:hover{
+  box-shadow:0 22px 54px rgba(0,22,48,.23),inset 0 1px 0 rgba(255,255,255,.9);
+  border-color:rgba(255,255,255,.9);
+}
+#appView .panel h1,#appView .panel h2,#appView .panel h3,
+#appView .metric strong,#appView .metric-label,
+#appView .content .page-title{color:#0b2c4f}
+#appView .content .muted,
+#appView .content .filter-grid label{color:#496782}
+#appView .content input,
+#appView .content select,
+#appView .content textarea{
+  background:rgba(255,255,255,.91);
+  border-color:rgba(139,174,205,.72);
+  color:#102b50;
+  box-shadow:inset 0 1px 2px rgba(13,53,88,.035);
+}
+#appView .content input:focus,
+#appView .content select:focus,
+#appView .content textarea:focus{
+  background:#fff;
+  border-color:#1689d8;
+  box-shadow:0 0 0 4px rgba(22,137,216,.14),0 5px 15px rgba(16,75,120,.08);
+}
+#appView .content table{border-color:rgba(194,216,236,.8)}
+#appView .content th{background:rgba(224,240,253,.78);color:#153b60}
+#appView .content td{background:rgba(255,255,255,.36)}
+#appView .content tr:hover td{background:rgba(224,242,255,.65)}
+#appView .sidebar{
+  background:linear-gradient(180deg,rgba(3,22,45,.96),rgba(5,39,70,.92) 58%,rgba(2,20,41,.97));
+  border-right:1px solid rgba(255,255,255,.12);
+  box-shadow:12px 0 38px rgba(0,16,36,.22);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+#appView .sidebrand-mark{filter:drop-shadow(0 8px 18px rgba(0,0,0,.22))}
+#appView .toast{
+  background:rgba(4,29,55,.92);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 18px 45px rgba(0,16,36,.3);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+@media(max-width:900px){
+  #appView.shell{background-attachment:scroll}
+  #appView .content{background:linear-gradient(145deg,rgba(230,242,255,.22),rgba(235,247,255,.12))}
+  #appView .topbar{background:rgba(240,248,255,.9)}
+}
+@media(prefers-reduced-transparency:reduce){
+  #appView .topbar,#appView .metric,#appView .panel,#appView .card{
+    backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(248,252,255,.96)
+  }
+}
+</style>
+
 </head>
 <body>
 <section id="loginView" class="login-wrap">
