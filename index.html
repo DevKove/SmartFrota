@@ -113,15 +113,27 @@ async function renderDashboard(){
  catch(e){$('connectionMessage').textContent='Não foi possível atualizar os indicadores. Tente novamente em instantes.';toast('Não foi possível carregar as informações. Tente novamente.')}
 }
 async function renderList(key){
- const c=$('pageContent'),plural=labels[key];c.innerHTML='<div class="eyebrow">Cadastro e consulta</div><h1 class="page-title">'+escapeHtml(plural)+'</h1><p class="muted">Registros disponíveis conforme seu perfil de acesso.</p><section class="panel"><div class="panel-head"><h3>Lista de '+escapeHtml(plural.toLowerCase())+'</h3><div class="actions"><button class="secondary" id="refreshBtn" type="button">Atualizar</button>'+(key==='vehicles'||key==='secretarias'?'<button id="newBtn" type="button">+ Novo cadastro</button>':'')+'</div></div><div id="listContent" class="empty">Carregando…</div></section><section id="formPanel" class="panel hidden"></section>';
+ const c=$('pageContent'),plural=labels[key];c.innerHTML='<div class="eyebrow">Cadastro e consulta</div><h1 class="page-title">'+escapeHtml(plural)+'</h1><p class="muted">Registros disponíveis conforme seu perfil de acesso.</p><section class="panel"><div class="panel-head"><h3>Lista de '+escapeHtml(plural.toLowerCase())+'</h3><div class="actions"><button class="secondary" id="refreshBtn" type="button">Atualizar</button>'+(key!=='drivers'?'<button id="newBtn" type="button">+ Novo cadastro</button>':'')+'</div></div><div id="listContent" class="empty">Carregando…</div></section><section id="formPanel" class="panel hidden"></section>';
  const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);const arr=Array.isArray(rows)?rows:[];let headers,html;
- if(key==='vehicles'){headers=['Frota','Placa','Marca / Modelo','Secretaria','Ano','Situação'];html=arr.map(x=>'<tr><td>'+escapeHtml(x.fleet_number)+'</td><td>'+escapeHtml(x.plate||'—')+'</td><td>'+escapeHtml([x.make,x.model].filter(Boolean).join(' ')||'—')+'</td><td>'+escapeHtml(x.secretaria_id||'—')+'</td><td>'+escapeHtml(x.model_year||'—')+'</td><td><span class="status '+(x.status==='active'?'':'off')+'">'+escapeHtml(({active:'Disponível',maintenance:'Em manutenção',unavailable:'Indisponível',retired:'Baixado'})[x.status]||x.status)+'</span></td></tr>')}
- else if(key==='secretarias'){headers=['Sigla','Secretaria','Responsável','Centro de custo','Situação'];html=arr.map(x=>'<tr><td>'+escapeHtml(x.sigla)+'</td><td>'+escapeHtml(x.nome)+'</td><td>'+escapeHtml(x.responsavel_nome||'—')+'</td><td>'+escapeHtml(x.centro_custo||'—')+'</td><td>'+escapeHtml(x.status||'ativa')+'</td></tr>')}
- else{headers=['Nome','Matrícula','CNH','Telefone','Situação'];html=arr.map(x=>'<tr><td>'+escapeHtml(x.full_name)+'</td><td>'+escapeHtml(x.employee_number||'—')+'</td><td>'+escapeHtml(x.license_category||'—')+'</td><td>'+escapeHtml(x.phone||'—')+'</td><td>'+escapeHtml(x.status||'—')+'</td></tr>')}
+ const configs={
+ vehicles:{headers:['Frota','Placa','Marca / Modelo','Secretaria','Ano','Situação'],cells:x=>[x.fleet_number,x.plate,[x.make,x.model].filter(Boolean).join(' '),x.secretaria_id,x.model_year,x.status]},
+ secretarias:{headers:['Sigla','Secretaria','Responsável','Centro de custo','Situação'],cells:x=>[x.sigla,x.nome,x.responsavel_nome,x.centro_custo,x.status]},
+ drivers:{headers:['Nome','Matrícula','CNH','Telefone','Situação'],cells:x=>[x.full_name,x.employee_number,x.license_category,x.phone,x.status]},
+ suppliers:{headers:['Fornecedor / Prestador','Nome fantasia','CNPJ / CPF','Contato','Situação'],cells:x=>[x.legal_name,x.trade_name,x.tax_identifier,[x.email,x.phone].filter(Boolean).join(' · '),x.status]},
+ work_orders:{headers:['Ordem','Título','Veículo','Prioridade','Status','Custo estimado'],cells:x=>[x.order_number,x.title,x.vehicle_id,x.priority,x.status,money(x.estimated_cost)]},
+ maintenance_plans:{headers:['Plano','Veículo','Intervalo (dias)','Intervalo (km)','Próxima data','Ativo'],cells:x=>[x.title,x.vehicle_id,x.interval_days,x.interval_km,x.next_due_on,x.active?'Sim':'Não']},
+ fuel_records:{headers:['Data','Veículo','Combustível','Litros','Valor total','Odômetro'],cells:x=>[x.occurred_at,x.vehicle_id,x.fuel_type,x.liters,money(x.total_amount),x.odometer_km]},
+ inspections:{headers:['Data','Veículo','Condutor','Odômetro','Resultado','Observações'],cells:x=>[x.inspected_at,x.vehicle_id,x.driver_id,x.odometer_km,x.result,x.notes]},
+ incidents:{headers:['Data','Veículo','Tipo','Gravidade','Status','Descrição'],cells:x=>[x.occurred_at,x.vehicle_id,x.incident_type,x.severity,x.status,x.description]},
+ inventory_products:{headers:['SKU','Produto / peça','Unidade','Estoque mínimo','Ativo'],cells:x=>[x.sku,x.name,x.unit,x.minimum_quantity,x.active?'Sim':'Não']},
+ contracts:{headers:['Contrato','Objeto','Fornecedor','Vigência','Valor','Status'],cells:x=>[x.contract_number,x.title,x.supplier_id,[x.starts_on,x.ends_on].filter(Boolean).join(' a '),money(x.total_value),x.status]},
+ budget_sheets:{headers:['Código','Descrição','Exercício','Valor inicial','Secretaria','Status'],cells:x=>[x.code,x.description,x.fiscal_year,money(x.initial_amount),x.secretaria_id,x.status]}
+ };
+ const cfg=configs[key]||configs.drivers;headers=cfg.headers;html=arr.map(x=>'<tr>'+cfg.cells(x).map(v=>'<td>'+escapeHtml(v??'—')+'</td>').join('')+'</tr>');
  target.innerHTML=table(headers,html)
  }catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>'}};
  $('refreshBtn').onclick=run;run();
- if(key==='vehicles'||key==='secretarias')$('newBtn').onclick=()=>showCreateForm(key);
+ if(key!=='drivers')$('newBtn').onclick=()=>showCreateForm(key);
 }
 function showCreateForm(key){
  const panel=$('formPanel');panel.classList.remove('hidden');
