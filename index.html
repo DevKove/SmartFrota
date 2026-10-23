@@ -252,6 +252,34 @@ input,select,textarea{min-width:0;max-width:100%;font-size:16px}
  .sidefoot{font-size:13px}
 }
 
+
+
+/* Identidade visual pós-login: fundo executivo, luminoso e discreto */
+.shell{background:#edf3fa}
+.main{background:
+ radial-gradient(ellipse at 8% 0%,rgba(8,127,232,.10),transparent 38%),
+ radial-gradient(ellipse at 96% 18%,rgba(22,166,232,.08),transparent 34%),
+ linear-gradient(145deg,#f6f9fd 0%,#edf3fa 52%,#f5f8fc 100%);min-height:100vh}
+.topbar{background:rgba(255,255,255,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(196,213,232,.8);box-shadow:0 5px 20px rgba(8,43,87,.035);position:relative;z-index:1}
+.content{position:relative;isolation:isolate}
+.content:before{content:"";position:fixed;inset:0 0 0 auto;width:min(36vw,520px);pointer-events:none;z-index:-1;opacity:.45;background:radial-gradient(circle at 80% 18%,rgba(8,127,232,.08),transparent 58%),radial-gradient(circle at 30% 75%,rgba(22,166,232,.07),transparent 52%)}
+.page-title{letter-spacing:-.65px;color:#102f52}
+.metric,.panel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(249,252,255,.96));border:1px solid rgba(204,220,237,.88);box-shadow:0 8px 24px rgba(8,43,87,.055),0 1px 2px rgba(8,43,87,.035);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.metric{position:relative;overflow:hidden}
+.metric:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#087fe8,#16a6e8);opacity:.82}
+.metric:hover,.panel:hover{border-color:#b8d5f1;box-shadow:0 14px 32px rgba(8,43,87,.085),0 2px 5px rgba(8,43,87,.04);transform:translateY(-2px)}
+.metric strong{letter-spacing:-.7px}
+.panel{border-radius:17px}
+.panel-head{padding-bottom:12px;border-bottom:1px solid #eaf0f7}
+table{border-radius:10px;overflow:hidden}
+th{background:#f2f7fc;color:#59728e}
+tbody tr{transition:background .15s ease}
+tbody tr:hover{background:#f3f8fe}
+input,select,textarea{transition:border-color .15s ease,box-shadow .15s ease}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#5aa9f2;box-shadow:0 0 0 3px rgba(8,127,232,.12)}
+@media(max-width:900px){.main{background:radial-gradient(ellipse at 20% 0%,rgba(8,127,232,.08),transparent 42%),linear-gradient(145deg,#f6f9fd,#edf3fa)}.content:before{display:none}.metric:hover,.panel:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.metric,.panel,tbody tr,input,select,textarea{transition:none}}
+
 </style>
 </head>
 <body>
