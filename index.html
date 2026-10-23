@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102a43"><meta name="description" content="SmartFrota — Gestão pública de frota">
+<link rel="manifest" href="./manifest.webmanifest"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="apple-touch-icon" href="./icons/icon-192.svg">
 <title>SmartFrota | Gestão Pública</title>
 <style>
 :root{--navy:#082b57;--blue:#087fe8;--teal:#16a6e8;--bg:#f3f7fc;--ink:#1c3555;--muted:#637b98;--line:#dce6f1;--white:#fff;--red:#b42318;--green:#21834a;--shadow:0 12px 32px #082b5712;--brand-blue:#087fe8;--brand-navy:#082b57;--brand-pale:#eaf4ff}
@@ -441,6 +442,16 @@ th{color:#243f5a;background:#e5eef8}
   .secretaria-card:hover{transform:none;box-shadow:0 8px 22px #102b5010!important}
 }
 
+
+/* PWA: instalação, indicação de conexão e áreas seguras para dispositivos móveis */
+#pwaInstallButton{position:fixed;right:16px;bottom:16px;z-index:50;display:none;align-items:center;gap:9px;min-height:48px;padding:12px 16px;border:1px solid #ffffff55;border-radius:999px;background:linear-gradient(120deg,#087fe8,#0759b7);color:#fff;font-weight:800;box-shadow:0 10px 28px #031a3b55}
+#pwaInstallButton[hidden]{display:none!important}
+#pwaInstallButton svg{width:19px;height:19px;flex:0 0 19px}
+#pwaInstallHint{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:49;display:none;padding:13px 15px;border:1px solid #c6dcf2;border-radius:12px;background:#fff;color:#17324f;box-shadow:0 12px 32px #061b3533;font-size:13px}
+#pwaInstallHint.show{display:block}
+@media(max-width:600px){#pwaInstallButton{right:12px;bottom:calc(12px + env(safe-area-inset-bottom));min-height:46px;padding:11px 14px;font-size:13px}#pwaInstallHint{bottom:calc(68px + env(safe-area-inset-bottom))}}
+@media print{#pwaInstallButton,#pwaInstallHint{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -647,7 +658,49 @@ async function renderList(key){
    const section=ev.target.closest('[data-section-export]');
    if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'frotagov-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
    const all=ev.target.closest('[data-workspace-export]');if(!all)return;
-   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
+   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script>
+<div id="pwaInstallHint" role="status" aria-live="polite"></div>
+<button id="pwaInstallButton" type="button" aria-label="Instalar SmartFrota">
+<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Instalar aplicativo</span>
+</button>
+<script>
+(function(){
+ const button=document.getElementById('pwaInstallButton');
+ const hint=document.getElementById('pwaInstallHint');
+ if(!button||!hint)return;
+ let installPrompt=null;
+ const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ const showHint=message=>{hint.textContent=message;hint.classList.add('show');};
+ const hideHint=()=>hint.classList.remove('show');
+ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+ const updateButton=()=>{
+   if(isStandalone()){button.hidden=true;button.style.display='none';hideHint();return}
+   if(installPrompt){button.hidden=false;button.style.display='inline-flex';return}
+   if(isIOS){button.hidden=false;button.style.display='inline-flex';return}
+   button.hidden=true;button.style.display='none';
+ };
+ window.addEventListener('beforeinstallprompt',event=>{
+   event.preventDefault();installPrompt=event;updateButton();
+ });
+ window.addEventListener('appinstalled',()=>{
+   installPrompt=null;updateButton();showHint('SmartFrota foi instalado neste dispositivo.');setTimeout(hideHint,5000);
+ });
+ button.addEventListener('click',async()=>{
+   if(installPrompt){
+     const promptEvent=installPrompt;installPrompt=null;
+     try{await promptEvent.prompt();await promptEvent.userChoice;}catch(_){}
+     updateButton();return;
+   }
+   if(isIOS)showHint('Para instalar no iPhone/iPad: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.');
+ });
+ if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
+ }
+ updateButton();
+})();
+</script>
+
+</body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
    const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
    if(!flat.length){message.textContent='Não há registros para exportar.';return}
    if(all.dataset.workspaceExport==='json'){exportRows(flat,'json','frotagov-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10));message.textContent='Arquivo JSON preparado.';return}
