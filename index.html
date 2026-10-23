@@ -563,6 +563,14 @@ th{color:#243f5a;background:#e5eef8}
 #appView .institutional-header-contact strong,#appView .institutional-header-contact span,#appView .institutional-header-contact a,#appView .institutional-header-contact a:hover{color:#334155!important}
 #appView .institutional-header-contact a{text-decoration:underline;text-underline-offset:2px}
 @media(max-width:700px){#appView .topbar{align-items:flex-start}#appView .institutional-header-contact{flex-direction:column;align-items:flex-start;gap:4px;padding-top:9px;font-size:11px}#appView .institutional-header-contact span{overflow-wrap:anywhere}}
+
+/* Contato institucional integrado ao cabeçalho principal, em branco */
+#appView .topbar{position:relative}
+#appView .topbar .institutional-header-contact{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin-left:auto;max-width:min(62%,900px);color:#fff!important;font-size:12px;line-height:1.4;text-align:right}
+#appView .topbar .institutional-header-contact strong,#appView .topbar .institutional-header-contact span,#appView .topbar .institutional-header-contact a,#appView .topbar .institutional-header-contact a:hover{color:#fff!important}
+#appView .topbar .institutional-header-contact a{text-decoration:underline;text-underline-offset:2px}
+@media(max-width:900px){#appView .topbar .institutional-header-contact{flex:1 0 100%;order:3;max-width:100%;margin-left:0;padding-top:8px;border-top:1px solid #ffffff40;text-align:left;justify-content:flex-start}}
+@media(max-width:520px){#appView .topbar .institutional-header-contact{flex-direction:column;align-items:flex-start;gap:4px;font-size:11px}#appView .topbar .institutional-header-contact span{overflow-wrap:anywhere}}
 </style>
 </head>
 <body>
@@ -595,8 +603,8 @@ th{color:#243f5a;background:#e5eef8}
 <button data-page="budget_sheets">▤ &nbsp; Orçamento por secretaria</button><button data-page="reports" style="display:block!important;visibility:visible!important">▥ &nbsp; Relatórios</button><button data-page="users" style="display:block!important;visibility:visible!important">♙ &nbsp; Usuários e perfis</button>
 </div></section>
 </nav><div class="sidefoot">Status do sistema<br><span id="sideStatus">Verificando conexão…</span></div></aside>
-<div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
-<div class="institutional-header-contact" aria-label="Contato da Secretaria Municipal de Serviços Públicos"><strong>Secretaria Municipal de Serviços Públicos</strong><span>Endereço: R. Benedito Antunes Ribeiro, 451 — Jd. M. da Glória, Araçoiaba da Serra — SP, 18190-025</span><a href="tel:+551532811623">Telefone: (15) 3281-1623</a></div><main id="pageContent" class="content"></main></div></section>
+<div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="secondary mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button><div><div class="eyebrow">SmartFrota / Administração</div><h2 id="pageHeading">Visão geral</h2></div></div><div class="institutional-header-contact" aria-label="Contato da Secretaria Municipal de Serviços Públicos"><strong>Secretaria Municipal de Serviços Públicos</strong><span>Endereço: R. Benedito Antunes Ribeiro, 451 — Jd. M. da Glória, Araçoiaba da Serra — SP, 18190-025</span><a href="tel:+551532811623">Telefone: (15) 3281-1623</a></div><div class="userbox"><span id="userName">Usuário</span><button class="secondary" id="logoutButton" type="button">Sair</button></div></header>
+<main id="pageContent" class="content"></main></div></section>
 <div id="toast" class="toast hidden" role="status"></div>
 <div id="pwaInstallHint" role="status" aria-live="polite"></div>
 <button id="pwaInstallButton" type="button" aria-label="Instalar SmartFrota">
