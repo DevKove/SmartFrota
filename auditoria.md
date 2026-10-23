@@ -47,7 +47,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 | Acesso direto ao banco via API pública | Consulta de grants não encontrou privilégios de tabela para anon ou authenticated no schema public; RLS habilitado em 28 tabelas | APROVADO — grants observados; teste externo NÃO VERIFICADO |
 | Configuração de senhas comprometidas | Advisor do Supabase reportou proteção contra senhas vazadas desabilitada | REPROVADO — recomendação de segurança pendente |
 | Índices e desempenho do banco | Advisors reportaram 37 FKs sem índice de cobertura e 28 índices não utilizados | REPROVADO — análise de otimização pendente |
-| Build, CI e publicação final | Não foi possível executar o pipeline localmente; não havia status de check associado ao commit consultado | BLOQUEADO / NÃO VERIFICADO |
+| Build, CI e publicação final | GitHub Actions `Validate SmartFrota`, run 20, job `validate` e passo `Validate frontend JavaScript` concluídos com sucesso; build completo e publicação visual não foram testados | APROVADO — CI configurado; E2E/publicação NÃO VERIFICADOS |
 | Backup e restauração | Não executados para evitar impacto em dados reais | BLOQUEADO / NÃO VERIFICADO |
 
 ## 4. Testes técnicos executados nesta etapa
@@ -69,7 +69,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 15. O código-fonte da função e as migrações foram sincronizados no GitHub. Não havia requisições registradas para a versão 16 ou 17 no momento das verificações; o teste runtime pós-deploy continua pendente.
 16. Revalidação estática final: 23 de 23 verificações passaram; os três blocos JavaScript inline e o service worker não apresentaram erros de sintaxe; as 11 tabelas esperadas têm deleted_at; a função ativa versão 17 corresponde ao código versionado no GitHub. Isso não substitui testes E2E.
 
-**Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede. Por isso, não afirmo que node scripts/validate-inline-js.mjs, o navegador, o build ou o GitHub Actions foram executados com sucesso. A validação isolada acima não substitui o pipeline real.
+**Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede, portanto o script não foi executado localmente neste ambiente. Entretanto, o GitHub Actions foi consultado: o workflow `Validate SmartFrota` concluiu com sucesso no run 20, commit `f85c5c10bf4ca22eb42129f0a508b536075f463f` (https://github.com/DevKove/SmartFrota/actions/runs/40017905083). O job `validate` e o passo `Validate frontend JavaScript` passaram. Isso confirma a validação automatizada configurada no workflow, mas não substitui testes E2E no navegador nem valida CRUD/autorização real.
 
 ## 5. Defeito encontrado e correção aplicada
 
@@ -79,7 +79,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 - **Evidência:** logs da versão 15 registraram HTTP 500 em contratos, inspeções, ordens de serviço, abastecimentos, ocorrências, planos de manutenção e orçamento. A consulta ao esquema confirmou ausência de deleted_at em budget_sheets, contracts, fuel_records, incidents, inspections, inventory_products, maintenance_plans, work_orders, financial_transactions e inventory_movements; também faltavam updated_at em fuel_records, inspections, financial_transactions e inventory_movements, além de created_at em inventory_movements.
 - **Correção:** migração aditiva aplicada; a verificação posterior confirmou os campos esperados sem apagar registros. A Edge Function foi implantada inicialmente como versão 16 e depois atualizada para versão 17, incluindo limpeza compensatória na criação de usuários; a versão 16 passou a reconhecer financial_transactions, inventory_movements e vehicle_documents como recursos somente de leitura, com autorização e escopo por secretaria/veículos.
 - **Evidência de implantação:** migração registrada como 20261023201201 / align_api_resource_columns; versão ativa da função confirmada como 17.
-- **Status:** esquema e implantação confirmados; requisições reais às versões 16 e 17 ainda não apareceram nos logs após a implantação; validar após recarregar a interface.
+- **Status:** esquema e implantação confirmados. Consulta aos logs em 2026-10-23 20:33 UTC mostrou tráfego apenas na versão 15 (176 respostas 200, 21 respostas 500 e 9 respostas 404); não havia requisições registradas para as versões 16/17 após a implantação. Portanto, o runtime da versão 17 continua sem confirmação pós-deploy. Acessar/recarregar a interface e repetir a consulta é o próximo teste necessário.
 
 ### SF-UI-001 — Itens de menu visíveis para perfis sem permissão
 
@@ -118,7 +118,7 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 
 ## 7. Próximas etapas obrigatórias
 
-1. Confirmar no GitHub Actions o resultado da validação após os commits. O status consultado ainda não retornou checks associados aos commits.
+1. **GitHub Actions confirmado:** workflow `Validate SmartFrota`, run 20, commit `f85c5c10bf4ca22eb42129f0a508b536075f463f`, conclusão `success`; job `validate` e passo `Validate frontend JavaScript` passaram. Isso não equivale a E2E.
 2. Recarregar o sistema e confirmar que a versão 17 da API retorna os resultados esperados para listas com esquema corrigido e para as três rotas adicionais.
 3. Executar os principais fluxos em navegador: login válido/inválido, restauração de sessão, logout, troca de senha, cada perfil e navegação por menu.
 4. Criar usuários fictícios em ambiente isolado para validar permissões e isolamento entre secretarias.
