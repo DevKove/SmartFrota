@@ -67,6 +67,7 @@ Não foram feitas alterações destrutivas no banco de produção, não foram cr
 13. Edge Function atualizada para versão 16; foram adicionadas rotas de consulta somente leitura para financial_transactions, inventory_movements e vehicle_documents, com checagem de permissão e filtro por secretaria/veículos autorizados.
 14. Após identificar caminhos que poderiam deixar uma conta parcialmente criada se a atribuição de perfil ou secretaria falhasse, foi implementada limpeza compensatória da conta Auth, perfil, perfis e vínculos antes de retornar erro. A função foi implantada como versão 17.
 15. O código-fonte da função e as migrações foram sincronizados no GitHub. Não havia requisições registradas para a versão 16 ou 17 no momento das verificações; o teste runtime pós-deploy continua pendente.
+16. Revalidação estática final: 23 de 23 verificações passaram; os três blocos JavaScript inline e o service worker não apresentaram erros de sintaxe; as 11 tabelas esperadas têm deleted_at; a função ativa versão 17 corresponde ao código versionado no GitHub. Isso não substitui testes E2E.
 
 **Limitação importante:** a tentativa de clonar o repositório pelo ambiente de execução não funcionou por indisponibilidade de DNS/rede. Por isso, não afirmo que node scripts/validate-inline-js.mjs, o navegador, o build ou o GitHub Actions foram executados com sucesso. A validação isolada acima não substitui o pipeline real.
 
