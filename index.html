@@ -935,7 +935,7 @@ const state={token:null,user:null,page:'dashboard',profile:null,online:navigator
 const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',suppliers:'Fornecedores / Prestadores',work_orders:'Ordens de serviço',maintenance_plans:'Planos de manutenção',fuel_records:'Abastecimentos',inspections:'Inspeções e checklists',incidents:'Ocorrências e sinistros',inventory_products:'Almoxarifado / Peças',contracts:'Contratos',budget_sheets:'Orçamento por secretaria',reports:'Relatórios',users:'Usuários e perfis'};
 const pagePermissions={vehicles:'vehicles:read',secretarias:'secretarias:read',drivers:'drivers:read',suppliers:'suppliers:read',work_orders:'work_orders:read',maintenance_plans:'maintenance:read',fuel_records:'fuel:read',inspections:'inspections:read',incidents:'incidents:read',inventory_products:'inventory:read',contracts:'contracts:read',budget_sheets:'finance:read',reports:'reports:read',users:'users:read'};
 const isSystemAdmin=()=>Boolean(state.profile?.is_admin===true);
-function canAccessPage(page){return page==='dashboard'||isSystemAdmin()||Boolean(pagePermissions[page]&&state.profile?.permissions?.includes(pagePermissions[page]));}
+function canAccessPage(page){if(page==='users')return isSystemAdmin();return page==='dashboard'||isSystemAdmin()||Boolean(pagePermissions[page]&&state.profile?.permissions?.includes(pagePermissions[page]));}
 function applyNavigationPermissions(){
  document.querySelectorAll('#nav button[data-page]').forEach(button=>{
   const visible=canAccessPage(button.dataset.page);
@@ -1317,7 +1317,6 @@ async function renderUsers(){
   {key:'contracts',title:'Contratos',permission:'contracts'},
   {key:'budget_sheets',title:'Orçamento por secretaria',permission:'finance'},
   {key:'reports',title:'Relatórios',permission:'reports',actions:['read']},
-  {key:'users',title:'Usuários e permissões',permission:'users',actions:['read','create','update']}
  ];
  const actionDefs=[['read','Consultar'],['create','Cadastrar'],['update','Editar'],['delete','Excluir']];
  const permissionOptions=moduleDefs.flatMap(m=>(m.actions||['read','create','update','delete']).map(action=>({code:m.permission+':'+action,title:m.title,action})));
