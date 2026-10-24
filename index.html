@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#087fe8"><meta name="description" content="SmartFrota — Gestão pública de frota">
-<link rel="manifest" href="/SmartFrota/manifest.webmanifest?v=8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="icon" type="image/jpeg" href="/SmartFrota/icons/logo.jpg?v=8"><link rel="apple-touch-icon" href="/SmartFrota/icons/logo.jpg?v=8">
+<link rel="manifest" href="/SmartFrota/manifest.webmanifest?v=9"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="icon" type="image/jpeg" href="/SmartFrota/icons/logo.jpg?v=9"><link rel="apple-touch-icon" href="/SmartFrota/icons/logo.jpg?v=9">
 <title>SmartFrota | Gestão Pública</title>
 <style>
 :root{--navy:#082b57;--blue:#087fe8;--teal:#16a6e8;--bg:#f3f7fc;--ink:#1c3555;--muted:#637b98;--line:#dce6f1;--white:#fff;--red:#b42318;--green:#21834a;--shadow:0 12px 32px #082b5712;--brand-blue:#087fe8;--brand-navy:#082b57;--brand-pale:#eaf4ff}
@@ -953,20 +953,21 @@ th{color:#243f5a;background:#e5eef8}
     const icon=(manifest.icons||[]).find(item=>(item.sizes||'').split(/\\s+/).includes(size)&&(!item.purpose||item.purpose.split(/\\s+/).includes('any')));
     if(!icon){checks.push('ERRO: ícone '+size+' ausente.');continue;}
     const iconResponse=await fetch(icon.src,{cache:'no-store'});
-    checks.push(iconResponse.ok?'OK: ícone '+size+' acessível.':'ERRO: ícone '+size+' retornou HTTP '+iconResponse.status+'.');
+    if(!iconResponse.ok){checks.push('ERRO: ícone '+size+' retornou HTTP '+iconResponse.status+'.');continue;}
+    try{const bitmap=await createImageBitmap(await iconResponse.blob());const valid=bitmap.width===Number(size.split('x')[0])&&bitmap.height===Number(size.split('x')[1]);checks.push(valid?'OK: ícone '+size+' acessível e com dimensões reais corretas.':'ERRO: ícone declarado '+size+' tem dimensões reais '+bitmap.width+'x'+bitmap.height+'.');bitmap.close();}catch(iconError){checks.push('ERRO: não foi possível decodificar o ícone '+size+'.');}
    }
    if('serviceWorker' in navigator){
     const registration=await navigator.serviceWorker.getRegistration('/SmartFrota/');
     checks.push(registration?'OK: service worker registrado.':'AVISO: service worker ainda não registrado; atualize e aguarde alguns segundos.');
    }else checks.push('AVISO: este navegador não oferece service worker.');
   }catch(error){checks.push('ERRO no diagnóstico: '+(error&&error.message?error.message:'não foi possível verificar manifesto/ícones.'));}
-  checks.push('Se todos os itens estiverem OK e a instalação não aparecer, o Chrome pode estar aplicando critérios próprios ou uma recusa anterior. No PC, abra chrome://web-app-internals; no Android, chrome://inspect.');
+  checks.push('O botão só abre a confirmação nativa quando o Chrome dispara beforeinstallprompt. Se esse evento não existir, corrija os erros acima e recarregue a página; não é possível forçar a instalação por JavaScript. No PC, confira também chrome://web-app-internals.');
   showHint(checks.join(' '));
  });
  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateButton();});
  window.addEventListener('appinstalled',()=>{button.style.display='none';hideHint();});
  if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js?v=22',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js?v=24',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
  }
  updateButton();
 })();
