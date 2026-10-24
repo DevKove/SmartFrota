@@ -1221,7 +1221,7 @@ function showEditSecretaria(item,refresh){
   };
   const fields=defs[key]||[];
   const needsDepartment=['suppliers','work_orders','maintenance_plans','fuel_records','inspections','incidents','inventory_products','contracts'].includes(key);
-  if(needsDepartment){fields.unshift(['responsavel_nome','Responsável pelo cadastro','text',true]);fields.unshift(['secretaria_id','Secretaria','select',true,'secretarias']);}
+  if(needsDepartment&&!fields.some(([name])=>name==='secretaria_id')){fields.unshift(['secretaria_id','Secretaria','select',true,'secretarias']);}
   const html=fields.map(([name,label,type='text',required=false,opts])=>{let control;if(type==='textarea')control='<textarea name="'+name+'" rows="3"></textarea>';else if(type==='select'){const options=Array.isArray(opts)?opts.map(v=>'<option value="'+v+'">'+v.replaceAll('_',' ')+'</option>').join(''):'<option value="">Carregando opções…</option>';control='<select name="'+name+'" '+(required?'required':'')+' data-source="'+(typeof opts==='string'?opts:'')+'"><option value="">Selecione</option>'+options+'</select>'}else control='<input name="'+name+'" type="'+type+'" '+(required?'required':'')+' '+(name==='order_number'?'readonly placeholder="Gerado automaticamente ao salvar" title="O número é atribuído automaticamente em sequência pelo sistema."':'')+' '+(type==='number'?'min="0" step="0.01"':'')+'>';return '<div '+(type==='textarea'?'class="span2"':'')+'><label>'+label+(required?' *':'')+'</label>'+control+'</div>'}).join('');
   const inspectionItems=[
    ['documents','Documentos obrigatórios e licenciamento',false],
