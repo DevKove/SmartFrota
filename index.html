@@ -1485,6 +1485,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 
+<style id="smartfrota-fixed-sidebar">
+/* Desktop: o menu fica fixo na viewport; somente a navegação interna rola. */
+@media(min-width:901px){
+ #appView.shell{display:block;min-height:100vh;min-height:100dvh}
+ #appView .sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;z-index:30}
+ #appView .main{margin-left:250px;min-width:0}
+}
+/* Mobile: preserva o menu recolhido/aberto por botão e sem deslocar a página. */
+@media(max-width:900px){
+ #appView.shell{display:block}
+ #appView .main{margin-left:0}
+ #appView .sidebar{position:fixed;top:0;bottom:0;left:0;width:min(300px,86vw);height:100vh;height:100dvh;max-height:100vh;max-height:100dvh}
+}
+</style>
+
 <style id="smartfrota-independent-sidebar-scroll">
 /* Rolagem independente: somente a lista do menu rola; a página principal mantém sua própria rolagem. */
 #appView .sidebar{align-self:start;isolation:isolate}
