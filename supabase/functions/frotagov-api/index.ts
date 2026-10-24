@@ -100,6 +100,37 @@ Deno.serve(async (req: Request) => {
   const rawPath = marker >= 0 ? url.pathname.slice(marker) : url.pathname.replace(/^\/functions\/v1\/frotagov-api(?=\/|$)/, "");
   const path = rawPath.replace(/\/+$/, "") || "/";
   try {
+    if (path === "/v1/auth/register" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const display_name = String(body.display_name ?? "").trim();
+      const email = String(body.email ?? "").trim().toLowerCase();
+      const password = String(body.password ?? "");
+      if (display_name.length < 2 || display_name.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 14 || password.length > 1024) {
+        return fail(400, "validation_error", "Informe nome, e-mail válido e senha com pelo menos 14 caracteres.");
+      }
+      const { data: created, error: createError } = await admin.auth.admin.createUser({
+        email, password, email_confirm: true, user_metadata: { display_name }
+      });
+      if (createError || !created.user) {
+        if (createError?.code === "email_exists" || /already registered|already been registered/i.test(createError?.message ?? "")) {
+          return fail(409, "email_already_registered", "Este e-mail já possui cadastro. Se você já se cadastrou, aguarde a aprovação ou contate o administrador.");
+        }
+        console.error("public registration failed", { code: createError?.code ?? "unknown" });
+        return fail(400, "registration_failed", "Não foi possível concluir o cadastro. Confira os dados e tente novamente.");
+      }
+      const { error: profileError } = await admin.from("users").insert({
+        id: created.user.id, email, display_name,
+        password_hash: "SUPABASE_AUTH_ONLY:" + crypto.randomUUID(),
+        is_active: false, must_change_password: false
+      });
+      if (profileError) {
+        await rollbackNewUser(created.user.id);
+        if (profileError.code === "23505") return fail(409, "email_already_registered", "Este e-mail já possui cadastro. Se você já se cadastrou, aguarde a aprovação ou contate o administrador.");
+        console.error("public registration profile creation failed", { code: profileError.code });
+        return fail(500, "registration_failed", "Não foi possível salvar a solicitação. Tente novamente.");
+      }
+      return json({ message: "Cadastro recebido. Aguarde a aprovação do administrador.", status: "pending_approval" }, 201);
+    }
     if (path === "/v1/auth/login" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const email = String(body.email ?? "").trim().toLowerCase();
@@ -109,7 +140,12 @@ Deno.serve(async (req: Request) => {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error || !data.session || !data.user) return fail(401, "invalid_credentials", "E-mail ou senha inválidos.");
       const profile = await getProfile(data.session.access_token);
-      if (!profile) { await client.auth.signOut(); return fail(403, "profile_not_linked", "Conta autenticada sem perfil interno ativo. Solicite ao administrador."); }
+      if (!profile) {
+        const { data: pending } = await admin.from("users").select("is_active,deleted_at").eq("id", data.user.id).maybeSingle();
+        await client.auth.signOut();
+        if (pending && pending.is_active === false && !pending.deleted_at) return fail(403, "pending_approval", "Seu cadastro está aguardando aprovação do administrador. Você poderá entrar após a aprovação e a atribuição de um perfil.");
+        return fail(403, "profile_not_linked", "Conta sem perfil interno ativo. Solicite ao administrador.");
+      }
       return json({ access_token: data.session.access_token, token_type: "Bearer", expires_at: new Date(data.session.expires_at! * 1000).toISOString(), user: { id: profile.id, email: profile.email, display_name: profile.display_name, must_change_password: profile.must_change_password } });
     }
     const token = bearer(req);
