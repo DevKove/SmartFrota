@@ -22,7 +22,7 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
-if (!worker.includes("const CACHE_VERSION = 'v17';")) {
+if (!worker.includes("const CACHE_VERSION = 'v18';")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
@@ -36,6 +36,14 @@ if (!html.includes("(u.permission_codes||[]).map(permissionLabel).join(', ')")) 
 }
 if (!html.includes("((u.permission_codes||[]).length||(u.roles||[]).length)?'Inativo':'Pendente de aprovação'")) {
   throw new Error('A classificação de contas pendentes não considera as permissões atribuídas.');
+}
+if (!html.includes('data-page="audit">📊 &nbsp; Auditoria e extração') ||
+    !html.includes('async function renderAudit()') ||
+    !html.includes('Exportar filtrados · CSV') ||
+    !html.includes("function exportFiltered(format)") ||
+    !html.includes("load('/v1/'+key,'audit-'+key)") ||
+    !html.includes("auditFrom") || !html.includes("auditTo")) {
+  throw new Error('Os relatórios por módulo e a central de auditoria com filtros/exportação estão incompletos.');
 }
 if (!html.includes('Últimas 10 ordens de serviço') ||
     !html.includes("load('/v1/work_orders','work_orders')") ||
