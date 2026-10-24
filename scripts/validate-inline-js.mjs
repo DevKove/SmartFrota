@@ -55,6 +55,9 @@ for (const required of [
   'path === "/v1/auth/register"',
   'is_active: false, must_change_password: false',
   'pending_approval',
+  'function inScope(profile: Profile, record: any, resourceKey?: string)',
+  'if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id)',
+  'inScope(profile, current, key)',
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
