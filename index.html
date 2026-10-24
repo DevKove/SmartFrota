@@ -586,6 +586,49 @@ th{color:#243f5a;background:#e5eef8}
 #appView .sidebar-logo-bottom{position:relative;z-index:2;display:flex;flex:0 0 auto;align-items:center;justify-content:center;width:100%;margin-top:auto;padding:10px 8px 8px;border-top:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(3,22,45,.96),rgba(2,20,41,.99))}
 #appView .sidebar-logo-bottom img{display:block;width:min(100%,264px);max-height:117px;object-fit:contain;filter:drop-shadow(0 5px 12px rgba(0,0,0,.24));opacity:.98}
 @media(max-width:900px){#appView .sidebar{position:fixed;inset:0 auto 0 0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh}#appView .sidebar-logo-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom))}#appView .sidebar-logo-bottom img{max-height:108px}}
+
+/* Aparência exclusiva do botão de cadastro na tela de login */
+#loginView #showRegister{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:8px auto 2px;
+  padding:10px 18px;
+  min-height:42px;
+  border:1px solid rgba(8,127,232,.28);
+  border-radius:12px;
+  color:#075eb0;
+  background:linear-gradient(135deg,#ffffff 0%,#eaf4ff 100%);
+  box-shadow:0 4px 12px rgba(8,43,87,.08),inset 0 1px 0 rgba(255,255,255,.95);
+  font-weight:750;
+  letter-spacing:.01em;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;
+}
+#loginView #showRegister::before{
+  content:"+";
+  display:inline-grid;
+  place-items:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  color:#fff;
+  background:linear-gradient(145deg,#1596f5,#0868c5);
+  font-size:17px;
+  line-height:1;
+  box-shadow:0 2px 5px rgba(8,104,197,.22);
+}
+#loginView #showRegister:hover{
+  color:#064b91;
+  border-color:rgba(8,127,232,.55);
+  background:linear-gradient(135deg,#fff 0%,#dceeff 100%);
+  box-shadow:0 7px 18px rgba(8,43,87,.14),inset 0 1px 0 rgba(255,255,255,.98);
+  transform:translateY(-1px);
+}
+#loginView #showRegister:active{transform:translateY(0);box-shadow:0 2px 6px rgba(8,43,87,.1)}
+#loginView #showRegister:focus-visible{outline:3px solid rgba(8,127,232,.35);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#loginView #showRegister{transition:none}}
+
 </style>
 
 <style id="smartfrota-glass-theme">
@@ -796,7 +839,7 @@ th{color:#243f5a;background:#e5eef8}
   <form id="loginForm" class="login-card"><div class="eyebrow">Bem-vindo de volta</div><h2>Acesse sua conta</h2><p class="muted">Entre com as credenciais fornecidas pelo administrador do sistema.</p>
   <label for="email">E-mail institucional</label><input id="email" type="email" autocomplete="username" required maxlength="254" placeholder="nome@prefeitura.gov.br">
   <label for="password">Senha</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="Sua senha" aria-describedby="passwordToggle"><button id="passwordToggle" class="password-toggle" type="button" aria-label="Revelar senha" aria-pressed="false">Mostrar</button></div>
-  <button id="loginButton" type="submit">Entrar com segurança</button><div id="loginError" class="error" role="alert"></div><p class="notice">Use sua conta autorizada pelo administrador do sistema. Se não conseguir entrar, solicite a liberação do seu acesso.</p><p class="notice" style="text-align:center">Ainda não tem acesso? <button id="showRegister" class="secondary" type="button" style="display:inline-flex;margin:4px auto;padding:8px 14px">Criar cadastro</button></p>
+  <button id="loginButton" type="submit">Entrar com segurança</button><div id="loginError" class="error" role="alert"></div><p class="notice">Use sua conta autorizada pelo administrador do sistema. Se não conseguir entrar, solicite a liberação do seu acesso.</p><p class="notice" style="text-align:center">Ainda não tem acesso? <button id="showRegister" class="secondary" type="button">Criar cadastro</button></p>
   </form>
   <form id="registerForm" class="login-card hidden" novalidate><div class="eyebrow">Solicitação de acesso</div><h2>Cadastre-se</h2><p class="muted">Preencha seus dados. O acesso ficará bloqueado até a aprovação do administrador.</p>
   <label for="registerName">Nome completo</label><input id="registerName" name="display_name" type="text" autocomplete="name" required minlength="2" maxlength="160" placeholder="Seu nome completo">
