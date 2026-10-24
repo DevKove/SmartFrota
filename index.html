@@ -966,7 +966,7 @@ th{color:#243f5a;background:#e5eef8}
  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateButton();});
  window.addEventListener('appinstalled',()=>{button.style.display='none';hideHint();});
  if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js?v=20',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
  }
  updateButton();
 })();
