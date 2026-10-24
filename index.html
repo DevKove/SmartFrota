@@ -952,7 +952,7 @@ const cacheKey=key=>'frotagov-cache-user-'+(state.user?.id||'anonymous')+'-'+key
 function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-'))localStorage.removeItem(key)}}catch{}}
 function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-')&&!key.startsWith('frotagov-cache-user-'))localStorage.removeItem(key)}}catch{}}
 clearLegacyCache();
-function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),4200)}
+function toast(message){const el=$('toast');if(!el)return;el.textContent=message;el.classList.remove('hidden');setTimeout(()=>{if(el.isConnected)el.classList.add('hidden')},4200)}
 function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
 async function request(path,options={}) {
  const requestToken=state.token;
@@ -977,7 +977,7 @@ async function login(email,password){
 }
 async function loadProfile(){state.profile=await request('/v1/auth/me');$('userName').textContent=state.profile?.user?.display_name||state.user?.display_name||state.user?.email||'Usuário';applyNavigationPermissions();}
 function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');setOnline();navigate('dashboard').catch(error=>{const c=$('pageContent');if(c)c.innerHTML='<div class="error" role="alert">O painel não carregou. '+escapeHtml(error?.message||'Tente atualizar a página.')+'</div>';});}
-function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');clearUserCache();$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('password').value='';if(showMessage)toast('Sessão encerrada.')}
+function logout(showMessage=true){state.token=null;state.user=null;state.profile=null;sessionStorage.removeItem('frotagov-session');clearUserCache();const app=$('appView'),loginView=$('loginView'),password=$('password'),loginError=$('loginError');if(app)app.classList.add('hidden');if(loginView)loginView.classList.remove('hidden');if(password)password.value='';if(loginError)loginError.textContent='';if(showMessage)toast('Sessão encerrada.')}
 function setCache(key,data){try{localStorage.setItem(cacheKey(key),JSON.stringify({savedAt:new Date().toISOString(),data}))}catch{}}
 function getCache(key){try{const item=JSON.parse(localStorage.getItem(cacheKey(key))||'null');return item?.data??null}catch{return null}}
 async function load(path,key){try{const result=await request(path);const data=result?.data??result;setCache(key,data);return data}catch(error){if(error?.status)throw error;const cached=getCache(key);if(cached!==null){toast('Sem conexão: exibindo os últimos dados salvos desta conta.');return cached}throw error}}
