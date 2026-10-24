@@ -256,7 +256,7 @@ Deno.serve(async (req: Request) => {
         let email = "";
         if (Object.prototype.hasOwnProperty.call(b,"email")) {
           email = String(b.email ?? "").trim().toLowerCase();
-          if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254) return fail(400,"validation_error","E-mail inválido.");
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return fail(400,"validation_error","E-mail inválido.");
           changes.email = email;
         }
         const password = Object.prototype.hasOwnProperty.call(b,"temporary_password") ? String(b.temporary_password ?? "") : "";
