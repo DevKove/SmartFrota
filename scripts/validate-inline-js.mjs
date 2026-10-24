@@ -9,10 +9,13 @@ const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/
 
 const manifest = readFileSync('manifest.webmanifest', 'utf8');
 const pwaManifest = JSON.parse(manifest);
-if (pwaManifest.icons?.length !== 1 || pwaManifest.icons[0]?.src !== '/SmartFrota/icons/logo.jpg?v=6' || pwaManifest.icons[0]?.type !== 'image/jpeg') {
-  throw new Error('Manifest PWA deve usar logo.jpg como ícone oficial do SmartFrota.');
+const pwaIcons = pwaManifest.icons ?? [];
+if (pwaIcons.length !== 2 ||
+    !pwaIcons.some(icon => icon.src === '/SmartFrota/icons/logo.jpg?v=7' && icon.sizes === '192x192' && icon.type === 'image/jpeg') ||
+    !pwaIcons.some(icon => icon.src === '/SmartFrota/icons/logo.jpg?v=7' && icon.sizes === '512x512' && icon.type === 'image/jpeg')) {
+  throw new Error('Manifest PWA deve declarar o logo.jpg oficial nos tamanhos 192x192 e 512x512.');
 }
-if (!html.includes('manifest.webmanifest?v=6') || !html.includes('icons/logo.jpg?v=6')) {
+if (!html.includes('manifest.webmanifest?v=7') || !html.includes('icons/logo.jpg?v=7')) {
   throw new Error('Referências de manifesto e favicon precisam apontar para os recursos atuais do SmartFrota.');
 }
 
@@ -32,7 +35,7 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
-if (!worker.includes("const CACHE_VERSION = 'v21';")) {
+if (!worker.includes("const CACHE_VERSION = 'v22';")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
