@@ -210,7 +210,7 @@ Deno.serve(async (req: Request) => {
     if (profile.must_change_password) return fail(403, "password_change_required", "Altere a senha antes de continuar.");
     const key = match[1], id = match[2], method = req.method;
     if (key === "users") {
-      if (!profile.isAdmin && !allowed(profile, "users:read")) return fail(403, "forbidden", "Você não possui permissão para esta operação.");
+      if (!profile.isAdmin) return fail(403, "forbidden", "Somente o administrador principal pode consultar ou gerenciar usuários.");
       if (method === "GET" && !id) {
         let q = admin.from("users").select("id,email,display_name,is_active,must_change_password,last_login_at,created_at").is("deleted_at", null).order("display_name").limit(500);
         if (!profile.isAdmin) q = q.in("id", (await admin.from("user_secretarias").select("user_id").in("secretaria_id", profile.secretaria_ids)).data?.map(x => x.user_id) ?? []);
@@ -224,7 +224,6 @@ Deno.serve(async (req: Request) => {
         return json({ data: rows });
       }
       if (method === "POST" && !id) {
-        if (!profile.isAdmin && !allowed(profile, "users:create")) return fail(403, "forbidden", "Você não possui permissão para criar usuários.");
         const b = await req.json().catch(() => ({}));
         const email = String(b.email ?? "").trim().toLowerCase(), display_name = String(b.display_name ?? "").trim(), temporary_password = String(b.temporary_password ?? "");
         const permission_codes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x: unknown) => String(x)))] : [];
