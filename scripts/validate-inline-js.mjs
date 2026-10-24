@@ -37,6 +37,12 @@ if (!html.includes("(u.permission_codes||[]).map(permissionLabel).join(', ')")) 
 if (!html.includes("((u.permission_codes||[]).length||(u.roles||[]).length)?'Inativo':'Pendente de aprovação'")) {
   throw new Error('A classificação de contas pendentes não considera as permissões atribuídas.');
 }
+if (!html.includes('id="consulta-peca-sidebar-alignment"') ||
+    !html.includes('#appView .sidebar .nav>a.nav-external') ||
+    !html.includes('min-height:38px') ||
+    !html.includes('background:rgba(255,255,255,.17)')) {
+  throw new Error('O link Consulta peça não está alinhado ao padrão visual do menu lateral.');
+}
 if (/\basync\s+async\s+function\b/.test(html)) {
   throw new Error('Declaração async duplicada encontrada.');
 }
