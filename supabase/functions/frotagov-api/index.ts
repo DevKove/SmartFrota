@@ -70,7 +70,8 @@ async function getProfile(token: string): Promise<Profile | null> {
   if (permissionError) { console.error("user menu permissions query failed", { code: permissionError.code }); return null; }
   const roles = (roleRows ?? []).map((x: any) => x.roles?.code).filter(Boolean);
   const permissions = (permissionRows ?? []).map((x: any) => x.permission_code).filter(Boolean);
-  return { id, email: user.email, display_name: user.display_name, is_active: user.is_active, must_change_password: user.must_change_password, roles, permissions, secretaria_ids: (scopeRows ?? []).map((x: any) => x.secretaria_id), isAdmin: roles.includes("system_admin") };
+  const isAdmin = user.email.toLowerCase() === (Deno.env.get("SMARTFROTA_ADMIN_EMAIL") ?? "koveirovitor@gmail.com").trim().toLowerCase();
+  return { id, email: user.email, display_name: user.display_name, is_active: user.is_active, must_change_password: user.must_change_password, roles, permissions, secretaria_ids: (scopeRows ?? []).map((x: any) => x.secretaria_id), isAdmin };
 }
 const MENU_PERMISSION_CODES = new Set([...["vehicles","secretarias","drivers","suppliers","work_orders","maintenance","fuel","inspections","incidents","inventory","contracts","finance","reports","users"].flatMap(module => ["read","create","update","delete"].map(action => module + ":" + action))]);
 function bearer(req: Request) { return req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? ""; }
@@ -154,7 +155,7 @@ Deno.serve(async (req: Request) => {
     if (!token) return fail(401, "missing_bearer_token", "Entre novamente para continuar.");
     const profile = await getProfile(token);
     if (!profile) return fail(401, "invalid_token", "Sessão inválida ou expirada. Entre novamente.");
-    if (path === "/v1/auth/me" && req.method === "GET") return json({ user: { id: profile.id, email: profile.email, display_name: profile.display_name }, roles: profile.roles, permissions: profile.permissions, secretaria_ids: profile.secretaria_ids, must_change_password: profile.must_change_password });
+    if (path === "/v1/auth/me" && req.method === "GET") return json({ user: { id: profile.id, email: profile.email, display_name: profile.display_name }, roles: profile.roles, is_admin: profile.isAdmin, permissions: profile.permissions, secretaria_ids: profile.secretaria_ids, must_change_password: profile.must_change_password });
     if (path === "/v1/auth/logout" && req.method === "POST") {
       // Revoke the current session's refresh token without terminating other devices.
       // The current access-token JWT may remain valid until expiry; the frontend also clears local session state.
@@ -187,11 +188,13 @@ Deno.serve(async (req: Request) => {
         const { count } = await q;
         return count ?? 0;
       };
+      const canReadVehicles = allowed(profile, "vehicles:read");
+      const canReadOrders = allowed(profile, "work_orders:read");
       const [total, available, maintenance, orders, notifications] = await Promise.all([
-        count("vehicles"),
-        count("vehicles", q => q.eq("status", "active")),
-        count("vehicles", q => q.eq("status", "maintenance")),
-        count("work_orders", q => q.not("status", "in", '("completed","rejected","cancelled")')),
+        canReadVehicles ? count("vehicles") : Promise.resolve(0),
+        canReadVehicles ? count("vehicles", q => q.eq("status", "active")) : Promise.resolve(0),
+        canReadVehicles ? count("vehicles", q => q.eq("status", "maintenance")) : Promise.resolve(0),
+        canReadOrders ? count("work_orders", q => q.not("status", "in", '("completed","rejected","cancelled")')) : Promise.resolve(0),
         admin.from("notifications").select("id", { count: "exact", head: true }).eq("state", "unread").or("recipient_user_id.eq." + profile.id + ",recipient_user_id.is.null"),
       ]);
       return json({ data: { vehicles_total: total, vehicles_available: available, vehicles_maintenance: maintenance, open_work_orders: orders, unread_notifications: notifications.count ?? 0, generated_at: new Date().toISOString() } });
