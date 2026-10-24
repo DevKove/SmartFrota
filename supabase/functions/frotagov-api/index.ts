@@ -76,7 +76,7 @@ async function getProfile(token: string): Promise<Profile | null> {
 const MENU_PERMISSION_CODES = new Set([...["vehicles","secretarias","drivers","suppliers","work_orders","maintenance","fuel","inspections","incidents","inventory","contracts","finance","reports","users"].flatMap(module => ["read","create","update","delete"].map(action => module + ":" + action))]);
 function bearer(req: Request) { return req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? ""; }
 function allowed(profile: Profile, permission: string) { return profile.isAdmin || profile.permissions.includes(permission); }
-function inScope(profile: Profile, record: any) { return profile.isAdmin || (Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id)); }
+function inScope(profile: Profile, record: any, resourceKey?: string) {\n  if (profile.isAdmin) return true;\n  // Secretaria records are scoped by their own id, not by secretaria_id.\n  if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id);\n  return Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id);\n}
 
 // Compensating cleanup prevents orphaned Auth/profile/role rows if account setup fails midway.
 async function rollbackNewUser(userId: string) {
@@ -363,7 +363,7 @@ Deno.serve(async (req: Request) => {
       const b = await req.json().catch(() => ({}));
       const { data: current, error: findError } = await admin.from(cfg.table).select("*").eq("id", id).is("deleted_at", null).maybeSingle();
       if (findError || !current) return fail(404, "not_found", "Registro não encontrado.");
-      if (!inScope(profile, current)) return fail(403, "forbidden_scope", "Registro fora do seu escopo.");
+      if (!inScope(profile, current, key)) return fail(403, "forbidden_scope", "Registro fora do seu escopo.");
       if (b.expected_version !== undefined && Number(b.expected_version) !== current.version) return fail(409, "version_conflict", "O registro foi alterado por outra sessão. Atualize e tente novamente.");
       const payload = cleanFields(b, cfg.fields);
       if (!profile.isAdmin && payload.secretaria_id && !profile.secretaria_ids.includes(String(payload.secretaria_id))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
