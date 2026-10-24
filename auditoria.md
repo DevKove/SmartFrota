@@ -137,3 +137,72 @@ O código contém checagens de escopo na Edge Function, mas a tentativa de acess
 ## 8. Conclusão
 
 O trabalho executado corrigiu a visibilidade do menu, aplicou a migração de compatibilidade, implantou a API versão 18 com rotas adicionais, limpeza compensatória de cadastro e revogação local de sessão no logout. O smoke test real da API passou. A auditoria **não está concluída**: login válido, logout com token, CRUD completo, isolamento entre secretarias, navegação visual, PWA offline e restauração de backup ainda não têm evidência E2E. Até esses pontos serem verificados e as pendências relevantes serem tratadas, a recomendação é não declarar o sistema pronto para lançamento comercial.
+
+
+---
+
+# Atualização da auditoria — 24/10/2026
+
+Esta seção substitui os status anteriores quando houver diferença. O histórico abaixo foi preservado para rastreabilidade.
+
+## Estado atual verificado
+
+- **Edge Function ativa:** `frotagov-api`, versão **27**, projeto Supabase SmartFrota. O código implantado contém as verificações de escopo por recurso para edição e exclusão.
+- **GitHub Actions — validação:** [run 40098352009](https://github.com/DevKove/SmartFrota/actions/runs/40098352009) concluído com sucesso. As etapas de validação JavaScript e smoke test da autenticação passaram.
+- **GitHub Pages:** [run 40098342839](https://github.com/DevKove/SmartFrota/actions/runs/40098342839) concluiu a publicação do frontend com sucesso.
+- **Compatibilidade do esquema:** a inspeção read-only dos metadados confirmou que os 15 recursos configurados na API existem e que todos os campos permitidos pela configuração estão presentes nas tabelas correspondentes.
+- **Erros HTTP 5xx históricos:** houve respostas 500 para consultas operacionais em 23/10, antes da migração `align_api_resource_columns`. A consulta aos logs desde 23/10 às 20:12 UTC até 24/10 às 13:30 UTC não encontrou respostas 500, 502, 503 ou 504 da Edge Function. Isso é evidência operacional limitada, não prova de que todos os fluxos autenticados funcionem.
+- **Acesso direto ao banco:** 29 tabelas públicas estão com RLS habilitado e sem policies; a consulta de privilégios não encontrou permissões de tabela para `anon` ou `authenticated`. Isso é coerente com a arquitetura API-only, desde que a chave privilegiada permaneça exclusivamente no servidor. O aviso do advisor sobre RLS sem policies é informativo neste desenho; não abrir acesso direto nem adicionar policies genéricas.
+- **Advisor de segurança:** permanece 1 alerta de proteção contra senhas comprometidas desabilitada. A configuração não foi alterada porque não há ferramenta disponível nesta sessão para ajustar essa opção de Auth com segurança.
+- **Advisor de desempenho:** 38 chaves estrangeiras sem índice de cobertura e 27 índices marcados como não utilizados. São recomendações para revisão individual com planos de execução; não foram aplicadas alterações em lote.
+
+## Correções adicionais feitas nesta rodada
+
+| ID | Defeito | Correção | Evidência | Estado |
+|---|---|---|---|---|
+| SF-API-003 | Ao editar/excluir uma secretaria, a verificação genérica procurava `secretaria_id`, embora o registro de secretaria seja autorizado pelo próprio `id`. | A validação de escopo recebe agora a chave do recurso em PATCH e DELETE. | [Commit 6babc9e](https://github.com/DevKove/SmartFrota/commit/6babc9e552e15fe2281a5c8a799ff9b6b6db549e); Edge Function v27 | Corrigido no código e implantado; E2E autenticado pendente |
+| SF-AUTH-002 | Frontend permitia digitar senha com 10 caracteres, mas a API exige 14; o usuário só descobria a divergência ao enviar. | Cadastro e troca de senha agora exigem 14 caracteres, alinhados à API. | [Commit 8d0a4d4](https://github.com/DevKove/SmartFrota/commit/8d0a4d4bf24d26c3a56cf4fde88f5484f1631e52) | Publicado; E2E pendente |
+| SF-UI-002 | A tabela administrativa apresentava códigos de função em vez das permissões realmente concedidas, e a classificação de conta pendente considerava somente funções. | A tabela mostra `permission_codes` com rótulos legíveis e considera permissões ou funções ao distinguir contas inativas de cadastros pendentes. | [Commit 7d9dd05](https://github.com/DevKove/SmartFrota/commit/7d9dd05d91474ee9cc049ce1861eef1aabb9d701) | Publicado; E2E pendente |
+| SF-UI-003 | Formulários operacionais incluíam um campo obrigatório “Responsável pelo cadastro” que a API não persistia. | Removido o campo fictício; o vínculo à secretaria continua sendo solicitado nos módulos que precisam dele. | [Commit 699acabc](https://github.com/DevKove/SmartFrota/commit/699acabc930b68d6461fd45040c933c65c49e990) | Publicado; E2E pendente |
+
+O script `scripts/validate-inline-js.mjs` agora inclui verificações de regressão para a política de senha, exibição de permissões, campo não persistido e checagem de escopo em edição e exclusão. O workflow de validação mais recente passou: [run 40098352009](https://github.com/DevKove/SmartFrota/actions/runs/40098352009).
+
+## Inventário funcional identificado
+
+**15 páginas/áreas de interface:** Visão geral, Veículos, Secretarias, Condutores, Fornecedores/Prestadores, Ordens de serviço, Planos de manutenção, Abastecimentos, Inspeções e checklists, Ocorrências e sinistros, Almoxarifado/Peças, Contratos, Orçamento por secretaria, Relatórios e Usuários e perfis.
+
+**3 recursos de API somente para consulta adicionais:** transações financeiras, movimentações de estoque e documentos de veículos.
+
+O inventário foi identificado por inspeção de código e configuração; não significa que todas as telas ou operações foram exercitadas por uma pessoa no navegador.
+
+## Matriz de estado atual
+
+| ID | Módulo | Funcionalidade | Resultado observado | Status |
+|---|---|---|---|---|
+| TECH-01 | Frontend | Compilação dos blocos JavaScript inline | Workflow passou | APROVADO — sintaxe |
+| TECH-02 | PWA | Compilação do service worker | Workflow passou | APROVADO — sintaxe |
+| TECH-03 | API/Auth | Consulta de recurso sem Bearer token | Smoke test ao vivo validou 401 `missing_bearer_token` | APROVADO — rota protegida sem sessão |
+| TECH-04 | API/esquema | Correspondência de 15 recursos e campos permitidos com as tabelas | Nenhuma coluna ausente na comparação de metadados | APROVADO — inspeção de esquema |
+| TECH-05 | Operação | Respostas HTTP 5xx após a migração de compatibilidade | Nenhuma encontrada no intervalo de logs consultado | APROVADO — somente intervalo consultado |
+| GUI-01 | Login | Entrar com credenciais válidas e inválidas | Não executado por interface gráfica nesta sessão | BLOQUEADO |
+| GUI-02 | Sessão | Persistência, troca de senha e logout com sessão válida | Código revisado; sem interação visual autenticada | BLOQUEADO |
+| GUI-03 | CRUD | Criar, reabrir, editar e excluir registros de teste em cada módulo | Não executado pela interface | BLOQUEADO |
+| GUI-04 | Autorização | Acesso cruzado entre usuários de secretarias diferentes | Não executado com contas de teste independentes | BLOQUEADO |
+| GUI-05 | Usuários | Aprovar/reprovar cadastros, editar permissões e desativar conta | Código revisado; sem interação visual | BLOQUEADO |
+| GUI-06 | Relatórios | Exportar CSV e conferir conteúdo no arquivo | Não executado pela interface | NÃO TESTADO |
+| GUI-07 | PWA | Instalação, uso offline e sincronização após reconexão | Não executado em navegador/dispositivo | NÃO TESTADO |
+| SEC-01 | Supabase Auth | Proteção contra senhas comprometidas | Advisor indica opção desabilitada; não foi alterada nesta sessão | REPROVADO — configuração pendente |
+| PERF-01 | Banco | Índices de chaves estrangeiras | 38 avisos; precisa revisão com planos de execução | INCONCLUSIVO — otimização pendente |
+| PERF-02 | Banco | Índices marcados como não utilizados | 27 avisos; não removidos sem medição | INCONCLUSIVO — otimização pendente |
+
+**Contagem dos testes de interface gráfica:** 0 executados, 0 aprovados, 0 reprovados, 5 bloqueados e 2 não testados na matriz acima. O percentual de aprovação de testes funcionais de interface não pode ser calculado, pois não houve testes GUI aprovados ou reprovados. Os testes técnicos estão listados separadamente e não devem ser confundidos com testes funcionais completos.
+
+## Limitação que impede declarar conclusão total
+
+Nesta sessão não há ferramenta de controle visual de navegador/computador disponível para interagir com a interface publicada, e não foram fornecidas credenciais de contas de teste. A tentativa de acesso externo pelo ambiente de execução também falhou por indisponibilidade de DNS. Por isso, não é possível afirmar honestamente que login real, persistência CRUD, impressão, relatórios, responsividade, PWA offline ou isolamento entre secretarias foram aprovados. Nenhum teste funcional foi simulado ou contabilizado como executado.
+
+## Parecer final atualizado
+
+**Estado: PARCIALMENTE VALIDADO — NÃO APROVADO PARA ENCERRAMENTO FUNCIONAL.**
+
+As correções adicionais foram versionadas; a função Supabase v27 está ativa; o frontend foi publicado; a validação automatizada e o smoke test passaram; os metadados de esquema correspondem aos recursos da API; e não foram observadas respostas HTTP 5xx no período de logs consultado após a migração de compatibilidade. Permanecem pendentes os testes pela interface autenticada, a prova prática de isolamento por secretaria e a configuração de proteção contra senhas comprometidas. O sistema não deve ser declarado 100% concluído até que esses cenários sejam executados e documentados com evidências reais.
