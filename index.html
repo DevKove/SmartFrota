@@ -1004,7 +1004,7 @@ function clearUserCache(){try{for(let i=localStorage.length-1;i>=0;i--){const ke
 function clearLegacyCache(){try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key?.startsWith('frotagov-cache-')&&!key.startsWith('frotagov-cache-user-'))localStorage.removeItem(key)}}catch{}}
 clearLegacyCache();
 function toast(message){const el=$('toast');if(!el)return;el.textContent=message;el.classList.remove('hidden');setTimeout(()=>{if(el.isConnected)el.classList.add('hidden')},4200)}
-function setOnline(){state.online=navigator.onLine;$('sideStatus').textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
+function setOnline(){state.online=navigator.onLine;const status=$('sideStatus');if(status)status.textContent=state.online?'Conexão disponível':'Offline — dados em cache';}
 async function request(path,options={}) {
  const requestToken=state.token;
  const headers={'apikey':API_KEY,'Content-Type':'application/json',...(options.headers||{})};
