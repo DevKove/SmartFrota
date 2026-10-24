@@ -18,7 +18,17 @@ for (let attempt = 1; attempt <= 3; attempt += 1) {
     const body = await response.json().catch(() => null);
 
     if (response.status === 401 && body?.error?.code === "missing_bearer_token") {
-      console.log("Smoke test aprovado: Edge Function respondeu e negou corretamente uma consulta sem sessão.");
+      const registrationResponse = await fetch(apiBase.replace(/\\/+$/, "") + "/v1/auth/register", {
+        method: "POST",
+        headers: { apikey: apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ display_name: "", email: "", password: "" }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const registrationBody = await registrationResponse.json().catch(() => null);
+      if (registrationResponse.status !== 400 || registrationBody?.error?.code !== "validation_error") {
+        throw new Error(`Rota de cadastro não validou a solicitação inválida como esperado: HTTP ${registrationResponse.status}; código ${registrationBody?.error?.code ?? "indisponível"}.`);
+      }
+      console.log("Smoke test aprovado: API protege rotas internas sem sessão e a rota pública de cadastro valida os dados antes de criar conta.");
       process.exit(0);
     }
 
