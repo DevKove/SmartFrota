@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#087fe8"><meta name="description" content="SmartFrota — Gestão pública de frota">
-<link rel="manifest" href="/SmartFrota/manifest.webmanifest?v=10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="icon" type="image/jpeg" href="/SmartFrota/icons/logo.jpg?v=9"><link rel="apple-touch-icon" href="/SmartFrota/icons/logo.jpg?v=9">
+<link rel="manifest" href="/SmartFrota/manifest.webmanifest?v=11"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SmartFrota"><link rel="icon" type="image/jpeg" href="/SmartFrota/icons/logo.jpg?v=9"><link rel="apple-touch-icon" href="/SmartFrota/icons/logo.jpg?v=9">
 <title>SmartFrota | Gestão Pública</title>
 <style>
 :root{--navy:#082b57;--blue:#087fe8;--teal:#16a6e8;--bg:#f3f7fc;--ink:#1c3555;--muted:#637b98;--line:#dce6f1;--white:#fff;--red:#b42318;--green:#21834a;--shadow:0 12px 32px #082b5712;--brand-blue:#087fe8;--brand-navy:#082b57;--brand-pale:#eaf4ff}
@@ -930,44 +930,100 @@ th{color:#243f5a;background:#e5eef8}
  const hint=document.getElementById('pwaInstallHint');
  if(!button||!hint)return;
  let installPrompt=null;
+ let promptEventObserved=false;
+ let promptEventAt=null;
  const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
  const showHint=message=>{hint.textContent=message;hint.classList.add('show');};
  const hideHint=()=>hint.classList.remove('show');
  const updateButton=()=>{if(isStandalone()){button.style.display='none';hideHint();return;}button.style.display='inline-flex';button.hidden=false;};
+ const manualInstallHelp=()=>{
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){
+   showHint('Para instalar no iPhone/iPad, abra esta página no Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”.');
+   return;
+  }
+  const browser=navigator.userAgent;
+  if(/Edg\//.test(browser)){
+   showHint('O navegador não disponibilizou a confirmação automática. No Microsoft Edge, abra o menu ⋯ e procure “Aplicativos” > “Instalar este site como aplicativo”.');
+  }else if(/Chrome\//.test(browser)){
+   showHint('O Chrome não disponibilizou a confirmação automática nesta sessão. Para instalar, abra o menu ⋮ e procure “Transmitir, salvar e compartilhar” > “Instalar página como app” (o nome pode variar). Se essa opção não aparecer, confira chrome://web-app-internals e veja se o SmartFrota já está instalado neste perfil.');
+  }else{
+   showHint('Este navegador não disponibilizou a confirmação automática. Abra o menu do navegador e procure “Instalar aplicativo” ou “Adicionar à tela inicial”. Para uma confirmação automática, use uma versão atual do Chrome ou Edge.');
+  }
+ };
  button.addEventListener('click',async()=>{
-  if(installPrompt){installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;if(choice?.outcome==='accepted'){button.style.display='none';hideHint();}return;}
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){showHint('Para instalar no iPhone/iPad: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.');return;}
-  showHint('Verificando requisitos do SmartFrota…');
+  if(isStandalone()){showHint('O SmartFrota já está aberto como aplicativo instalado.');return;}
+  if(installPrompt){
+   const promptEvent=installPrompt;
+   installPrompt=null;
+   button.disabled=true;
+   try{
+    await promptEvent.prompt();
+    const choice=await promptEvent.userChoice;
+    if(choice?.outcome==='accepted'){button.style.display='none';hideHint();}
+    else showHint('A instalação não foi confirmada. Você pode tentar novamente pelo menu de instalação do navegador.');
+   }catch(error){
+    showHint('O navegador recusou a confirmação automática. Use o menu do Chrome/Edge para instalar o SmartFrota.');
+    console.warn('PWA: falha ao abrir a confirmação de instalação.',error);
+   }finally{button.disabled=false;}
+   return;
+  }
+  showHint('Verificando os requisitos de instalação…');
   const checks=[];
   try{
-   if(!window.isSecureContext)checks.push('ERRO: a página não está em contexto seguro (HTTPS).');
-   else checks.push('OK: página HTTPS.');
-   const manifestResponse=await fetch('/SmartFrota/manifest.webmanifest?diagnostico='+Date.now(),{cache:'no-store'});
+   checks.push(window.isSecureContext?'OK: página em contexto HTTPS seguro.':'ERRO: a página não está em contexto seguro (HTTPS).');
+   const manifestLink=document.querySelector('link[rel="manifest"]');
+   if(!manifestLink)throw new Error('link do manifesto não encontrado na página');
+   const manifestResponse=await fetch(manifestLink.href,{cache:'no-store'});
    if(!manifestResponse.ok)throw new Error('manifesto HTTP '+manifestResponse.status);
    const manifest=await manifestResponse.json();
-   if(!manifest.name||!manifest.short_name)checks.push('ERRO: nome do aplicativo ausente no manifesto.');
-   else checks.push('OK: nome do aplicativo no manifesto.');
-   if(!manifest.start_url||!manifest.scope||!['standalone','fullscreen','minimal-ui'].includes(manifest.display))checks.push('ERRO: start_url, scope ou display inválido.');
-   else checks.push('OK: start_url, scope e display.');
+   checks.push(manifest.name&&manifest.short_name?'OK: nome do aplicativo no manifesto.':'ERRO: nome do aplicativo ausente no manifesto.');
+   checks.push(manifest.start_url&&manifest.scope&&['standalone','fullscreen','minimal-ui'].includes(manifest.display)?'OK: start_url, scope e display.':'ERRO: start_url, scope ou display inválido.');
    for(const size of ['192x192','512x512']){
-    const icon=(manifest.icons||[]).find(item=>(item.sizes||'').split(/\\s+/).includes(size)&&(!item.purpose||item.purpose.split(/\\s+/).includes('any')));
-    if(!icon){checks.push('ERRO: ícone '+size+' ausente.');continue;}
-    const iconResponse=await fetch(icon.src,{cache:'no-store'});
+    const icon=(manifest.icons||[]).find(item=>(item.sizes||'').split(/\s+/).includes(size)&&(!item.purpose||(item.purpose||'').split(/\s+/).includes('any')));
+    if(!icon){checks.push('ERRO: ícone '+size+' ausente no manifesto.');continue;}
+    const iconUrl=new URL(icon.src,manifestLink.href);
+    const iconResponse=await fetch(iconUrl.href,{cache:'no-store'});
     if(!iconResponse.ok){checks.push('ERRO: ícone '+size+' retornou HTTP '+iconResponse.status+'.');continue;}
-    try{const bitmap=await createImageBitmap(await iconResponse.blob());const valid=bitmap.width===Number(size.split('x')[0])&&bitmap.height===Number(size.split('x')[1]);checks.push(valid?'OK: ícone '+size+' acessível e com dimensões reais corretas.':'ERRO: ícone declarado '+size+' tem dimensões reais '+bitmap.width+'x'+bitmap.height+'.');bitmap.close();}catch(iconError){checks.push('ERRO: não foi possível decodificar o ícone '+size+'.');}
+    try{
+     const bitmap=await createImageBitmap(await iconResponse.blob());
+     const valid=bitmap.width===Number(size.split('x')[0])&&bitmap.height===Number(size.split('x')[1]);
+     checks.push(valid?'OK: ícone '+size+' acessível e com dimensões reais corretas.':'ERRO: ícone declarado '+size+' tem dimensões reais '+bitmap.width+'x'+bitmap.height+'.');
+     bitmap.close();
+    }catch(_){checks.push('ERRO: não foi possível decodificar o ícone '+size+'.');}
    }
    if('serviceWorker' in navigator){
-    const registration=await navigator.serviceWorker.getRegistration('/SmartFrota/');
-    checks.push(registration?'OK: service worker registrado.':'AVISO: service worker ainda não registrado; atualize e aguarde alguns segundos.');
+    const registration=await navigator.serviceWorker.getRegistration(new URL(manifest.scope,location.origin).pathname);
+    checks.push(registration?'OK: service worker registrado.':'AVISO: service worker ainda não registrado.');
    }else checks.push('AVISO: este navegador não oferece service worker.');
-  }catch(error){checks.push('ERRO no diagnóstico: '+(error&&error.message?error.message:'não foi possível verificar manifesto/ícones.'));}
-  checks.push('O botão só abre a confirmação nativa quando o Chrome dispara beforeinstallprompt. Se esse evento não existir, corrija os erros acima e recarregue a página; não é possível forçar a instalação por JavaScript. No PC, confira também chrome://web-app-internals.');
+   if(typeof navigator.getInstalledRelatedApps==='function'){
+    try{
+     const installed=await navigator.getInstalledRelatedApps();
+     checks.push(installed.length?'AVISO: o navegador detectou aplicativo relacionado já instalado.':'INFO: nenhum aplicativo relacionado foi identificado por esta API.');
+    }catch(_){}
+   }
+  }catch(error){checks.push('ERRO no diagnóstico: '+(error?.message||'não foi possível verificar o manifesto e os ícones')+'.');}
+  checks.push('Evento beforeinstallprompt: '+(promptEventObserved?'recebido às '+new Date(promptEventAt).toLocaleTimeString()+'.':'não foi recebido nesta sessão. Isso não significa que o manifesto esteja errado: o Chrome pode suprimir o evento se o app já estiver instalado, se a instalação tiver sido dispensada recentemente ou por decisão do navegador.'));
   showHint(checks.join(' '));
+  manualInstallHelpAfterDiagnostics();
  });
- window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;updateButton();});
- window.addEventListener('appinstalled',()=>{button.style.display='none';hideHint();});
+ function manualInstallHelpAfterDiagnostics(){
+  const browser=navigator.userAgent;
+  let help='Para continuar, abra o menu do navegador e procure a opção de instalar o site como aplicativo.';
+  if(/Edg\//.test(browser))help=' No Edge: menu ⋯ > Aplicativos > Instalar este site como aplicativo.';
+  else if(/Chrome\//.test(browser))help=' No Chrome para PC: menu ⋮ > “Transmitir, salvar e compartilhar” > “Instalar página como app” (a redação pode variar). Confira também chrome://web-app-internals.';
+  if(hint.textContent.includes('não foi recebido nesta sessão'))showHint(hint.textContent+help);
+ }
+ window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  installPrompt=event;
+  promptEventObserved=true;
+  promptEventAt=Date.now();
+  updateButton();
+  hideHint();
+ });
+ window.addEventListener('appinstalled',()=>{installPrompt=null;button.style.display='none';hideHint();});
  if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js?v=25',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/SmartFrota/service-worker.js?v=26',{scope:'/SmartFrota/'}).catch(error=>console.warn('PWA: não foi possível registrar o service worker.',error)));
  }
  updateButton();
 })();
