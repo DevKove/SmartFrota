@@ -1405,7 +1405,7 @@ const showLogin=()=>{$('registerForm').classList.add('hidden');$('loginForm').cl
 $('showRegister').addEventListener('click',showRegistration);
 $('backToLogin').addEventListener('click',showLogin);
 $('registerForm').addEventListener('submit',async e=>{
- e.preventDefault();const button=$('registerButton'),msg=$('registerMessage');
+ e.preventDefault();const form=e.currentTarget,button=$('registerButton'),msg=$('registerMessage');
  if(button.disabled)return;
  const display_name=$('registerName').value.trim(),email=$('registerEmail').value.trim().toLowerCase(),password=$('registerPassword').value,confirmPassword=$('registerPasswordConfirm').value;
  msg.classList.remove('error');msg.textContent='';
@@ -1415,7 +1415,7 @@ $('registerForm').addEventListener('submit',async e=>{
  button.disabled=true;button.textContent='Enviando solicitação…';
  try{
   await request('/v1/auth/register',{method:'POST',body:JSON.stringify({display_name,email,password})});
-  e.currentTarget.reset();msg.classList.remove('error');msg.textContent='Cadastro recebido! Seu acesso está pendente de aprovação do administrador. Você poderá entrar somente após a aprovação e a atribuição de um perfil.';
+  form.reset();msg.classList.remove('error');msg.textContent='Cadastro recebido! Seu acesso está pendente de aprovação do administrador. Você poderá entrar somente após a aprovação e a atribuição de um perfil.';
   button.classList.add('hidden');
  }catch(err){msg.classList.add('error');msg.textContent=err?.message||'Não foi possível enviar o cadastro. Confira os dados e tente novamente.'}
  finally{button.disabled=false;if(!button.classList.contains('hidden'))button.textContent='Solicitar cadastro'}
