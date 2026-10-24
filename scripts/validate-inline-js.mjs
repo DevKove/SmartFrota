@@ -22,6 +22,9 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
+if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
+  throw new Error('Validação de senha do frontend está abaixo da política de 14 caracteres da API.');
+}
 if (/\basync\s+async\s+function\b/.test(html)) {
   throw new Error('Declaração async duplicada encontrada.');
 }
