@@ -22,7 +22,7 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
-if (!worker.includes("const CACHE_VERSION = 'v16';")) {
+if (!worker.includes("const CACHE_VERSION = 'v17';")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
@@ -36,6 +36,12 @@ if (!html.includes("(u.permission_codes||[]).map(permissionLabel).join(', ')")) 
 }
 if (!html.includes("((u.permission_codes||[]).length||(u.roles||[]).length)?'Inativo':'Pendente de aprovação'")) {
   throw new Error('A classificação de contas pendentes não considera as permissões atribuídas.');
+}
+if (!html.includes('Últimas 10 ordens de serviço') ||
+    !html.includes("load('/v1/work_orders','work_orders')") ||
+    !html.includes(".slice(0,10)") ||
+    !html.includes("statusLabels[String(x.status||'').toLowerCase()]")) {
+  throw new Error('A visão geral deve exibir as 10 ordens mais recentes, mantendo todos os status.');
 }
 if (!html.includes('id="consulta-peca-sidebar-alignment"') ||
     !html.includes('#appView .sidebar .nav>a.nav-external') ||
