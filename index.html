@@ -935,6 +935,10 @@ const state={token:null,user:null,page:'dashboard',profile:null,online:navigator
 const labels={dashboard:'Visão geral',vehicles:'Veículos',secretarias:'Secretarias',drivers:'Condutores',suppliers:'Fornecedores / Prestadores',work_orders:'Ordens de serviço',maintenance_plans:'Planos de manutenção',fuel_records:'Abastecimentos',inspections:'Inspeções e checklists',incidents:'Ocorrências e sinistros',inventory_products:'Almoxarifado / Peças',contracts:'Contratos',budget_sheets:'Orçamento por secretaria',reports:'Relatórios',users:'Usuários e perfis'};
 const pagePermissions={vehicles:'vehicles:read',secretarias:'secretarias:read',drivers:'drivers:read',suppliers:'suppliers:read',work_orders:'work_orders:read',maintenance_plans:'maintenance:read',fuel_records:'fuel:read',inspections:'inspections:read',incidents:'incidents:read',inventory_products:'inventory:read',contracts:'contracts:read',budget_sheets:'finance:read',reports:'reports:read',users:'users:read'};
 const isSystemAdmin=()=>Boolean(state.profile?.is_admin===true);
+function canPerform(moduleKey,action){
+ const map={vehicles:'vehicles',secretarias:'secretarias',drivers:'drivers',suppliers:'suppliers',work_orders:'work_orders',maintenance_plans:'maintenance',fuel_records:'fuel',inspections:'inspections',incidents:'incidents',inventory_products:'inventory',contracts:'contracts',budget_sheets:'finance',reports:'reports'};
+ return isSystemAdmin()||Boolean(state.profile?.permissions?.includes((map[moduleKey]||moduleKey)+':'+action));
+}
 function canAccessPage(page){if(page==='users')return isSystemAdmin();return page==='dashboard'||isSystemAdmin()||Boolean(pagePermissions[page]&&state.profile?.permissions?.includes(pagePermissions[page]));}
 function applyNavigationPermissions(){
  document.querySelectorAll('#nav button[data-page]').forEach(button=>{
@@ -1128,7 +1132,7 @@ async function renderList(key){
   collect().catch(()=>{message.textContent='Não foi possível carregar os dados da secretaria. Confira a conexão e tente novamente.'});
  }
  function secretariaDetails(item){
-  const visual=secretariaVisual(item),admin=state.profile?.roles?.includes('system_admin');
+  const visual=secretariaVisual(item),admin=canPerform('secretarias','update');
   const labels={id:'Identificador',nome:'Nome da secretaria',sigla:'Sigla',status:'Situação',responsavel_nome:'Responsável',responsavel_cargo:'Cargo do responsável',telefone_institucional:'Telefone institucional',email_institucional:'E-mail institucional',centro_custo:'Centro de custo',codigo_orcamentario:'Código orçamentário',descricao:'Descrição',created_at:'Data de cadastro',updated_at:'Última atualização',secretaria_id:'Secretaria vinculada'};
   const fields=Object.entries(item).filter(([k,v])=>v!==null&&v!==undefined&&v!=='').map(([k,v])=>{
    let value=v;
@@ -1150,8 +1154,9 @@ async function renderList(key){
  }
  const run=async()=>{const target=$('listContent');target.innerHTML='<div class="empty">Carregando…</div>';try{const rows=await load('/v1/'+key,key);allRows=Array.isArray(rows)?rows:[];setupFilters();draw()}catch(e){target.innerHTML='<div class="empty">Não foi possível carregar os registros. Verifique sua conexão ou tente novamente mais tarde.</div>';$('filterCount').textContent='Não foi possível carregar os registros.'}};
  $('refreshBtn').onclick=run;
+ $('newBtn').style.display=canPerform(key,'create')?'':'none';
  $('newBtn').onclick=()=>showCreateForm(key);
- $('listContent').addEventListener('click',e=>{const card=e.target.closest('[data-secretaria-id]');if(card&&key==='secretarias'){const item=allRows.find(x=>String(x.id)===card.dataset.secretariaId);if(item)secretariaWorkspace(item);return}if(e.target.closest('.secretaria-back')){draw();return}const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');const item=allRows.find(x=>String(x.id)===btn.dataset.id);if(item)showEditSecretaria(item,run)});
+ $('listContent').addEventListener('click',e=>{const card=e.target.closest('[data-secretaria-id]');if(card&&key==='secretarias'){const item=allRows.find(x=>String(x.id)===card.dataset.secretariaId);if(item)secretariaWorkspace(item);return}if(e.target.closest('.secretaria-back')){draw();return}const btn=e.target.closest('.secretaria-edit');if(!btn)return;if(!canPerform('secretarias','update'))return toast('Você não possui permissão para editar secretarias.');const item=allRows.find(x=>String(x.id)===btn.dataset.id);if(item)showEditSecretaria(item,run)});
  $('applyFilters').onclick=draw;
  $('clearFilters').onclick=()=>{['filterSearch','filterValue','filterStatus','filterDateFrom','filterDateTo','filterField'].forEach(id=>$(id).value='');document.querySelectorAll('#filterContext input,#filterContext select').forEach(el=>el.value='');draw()};
  $('filterGrid').addEventListener('input',e=>{if(e.target.matches('input'))draw()});
@@ -1159,12 +1164,12 @@ async function renderList(key){
  run();
 }
 function showEditSecretaria(item,refresh){
- if(!state.profile?.roles?.includes('system_admin'))return toast('Somente o administrador principal pode editar secretarias.');
+ if(!isSystemAdmin())return toast('Somente o administrador principal pode editar secretarias.');
  const modal=document.createElement('div');modal.className='user-modal-backdrop';modal.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(8,18,35,.72);display:grid;place-items:center;padding:18px;overflow:auto';
  modal.innerHTML='<section role="dialog" aria-modal="true" style="background:var(--panel,#fff);color:var(--text,#172033);width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:24px"><div class="panel-head"><h2>Editar secretaria</h2><button type="button" class="secondary close-edit">Fechar</button></div><p class="muted">As alterações serão salvas no Supabase.</p><form id="editSecretariaForm" class="form-grid"><label>Nome *<input name="nome" required minlength="2" maxlength="180"></label><label>Sigla *<input name="sigla" required maxlength="24"></label><label>Responsável<input name="responsavel_nome" maxlength="180"></label><label>Cargo do responsável<input name="responsavel_cargo" maxlength="180"></label><label>Telefone institucional<input name="telefone_institucional" maxlength="40"></label><label>E-mail institucional<input name="email_institucional" type="email" maxlength="254"></label><label>Centro de custo<input name="centro_custo" maxlength="100"></label><label>Código orçamentário<input name="codigo_orcamentario" maxlength="100"></label><label>Situação<select name="status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></label><label class="span2">Descrição / página oficial<textarea name="descricao" rows="3" maxlength="2000"></textarea></label><div class="span2 actions"><button type="submit">Salvar alterações</button></div><p id="editSecretariaMessage" class="muted span2" role="status"></p></form></section>';
  document.body.appendChild(modal);const form=modal.querySelector('#editSecretariaForm'),fields=['nome','sigla','responsavel_nome','responsavel_cargo','telefone_institucional','email_institucional','centro_custo','codigo_orcamentario','status','descricao'];fields.forEach(k=>form.elements[k].value=item[k]??'');
  const close=()=>modal.remove();modal.querySelector('.close-edit').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal)close()});
- form.onsubmit=async e=>{e.preventDefault();if(!state.profile?.roles?.includes('system_admin'))return;const fd=new FormData(form),msg=modal.querySelector('#editSecretariaMessage'),save=form.querySelector('button[type="submit"]'),body={};fields.forEach(k=>body[k]=String(fd.get(k)??'').trim()||null);body.nome=String(fd.get('nome')||'').trim();body.sigla=String(fd.get('sigla')||'').trim().toUpperCase();if(body.nome.length<2||!body.sigla){msg.textContent='Informe o nome e a sigla.';return}msg.textContent='Salvando…';save.disabled=true;try{await request('/v1/secretarias/'+encodeURIComponent(item.id),{method:'PATCH',body:JSON.stringify(body)});close();toast('Secretaria atualizada com sucesso.');await refresh()}catch(err){msg.textContent=err.message||'Não foi possível salvar.';save.disabled=false}};
+ form.onsubmit=async e=>{e.preventDefault();if(!canPerform('secretarias','update'))return toast('Você não possui permissão para editar secretarias.');const fd=new FormData(form),msg=modal.querySelector('#editSecretariaMessage'),save=form.querySelector('button[type="submit"]'),body={};fields.forEach(k=>body[k]=String(fd.get(k)??'').trim()||null);body.nome=String(fd.get('nome')||'').trim();body.sigla=String(fd.get('sigla')||'').trim().toUpperCase();if(body.nome.length<2||!body.sigla){msg.textContent='Informe o nome e a sigla.';return}msg.textContent='Salvando…';save.disabled=true;try{await request('/v1/secretarias/'+encodeURIComponent(item.id),{method:'PATCH',body:JSON.stringify(body)});close();toast('Secretaria atualizada com sucesso.');await refresh()}catch(err){msg.textContent=err.message||'Não foi possível salvar.';save.disabled=false}};
 }
  function normalizeSecretarias(payload){
   const candidates=[payload,payload?.data,payload?.items,payload?.secretarias,payload?.data?.items,payload?.data?.secretarias,payload?.result,payload?.result?.data];
@@ -1178,6 +1183,7 @@ function showEditSecretaria(item,refresh){
   return (multiple?'':'<option value="">'+escapeHtml(placeholder)+'</option>')+items.map(x=>'<option value="'+escapeHtml(x.id)+'">'+escapeHtml((x.sigla?x.sigla+' — ':'')+x.nome)+'</option>').join('');
  }
  async function showCreateForm(key){
+ if(!canPerform(key,'create')){toast('Você não possui permissão para cadastrar neste módulo.');return;}
  const modal=document.createElement('div');
  modal.className='user-modal-backdrop';
  modal.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(8,18,35,.72);display:grid;place-items:center;padding:18px;overflow:auto';
