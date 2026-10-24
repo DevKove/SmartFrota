@@ -25,6 +25,9 @@ try {
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
   throw new Error('Validação de senha do frontend está abaixo da política de 14 caracteres da API.');
 }
+if (html.includes("fields.unshift(['responsavel_nome','Responsável pelo cadastro'")) {
+  throw new Error('Formulários operacionais exibem um campo de responsável que a API não persiste.');
+}
 if (!html.includes("(u.permission_codes||[]).map(permissionLabel).join(', ')")) {
   throw new Error('A listagem administrativa não exibe as permissões efetivamente atribuídas.');
 }
