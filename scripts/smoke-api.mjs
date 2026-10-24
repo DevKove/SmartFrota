@@ -18,7 +18,7 @@ for (let attempt = 1; attempt <= 3; attempt += 1) {
     const body = await response.json().catch(() => null);
 
     if (response.status === 401 && body?.error?.code === "missing_bearer_token") {
-      const registrationResponse = await fetch(apiBase.replace(/\\/+$/, "") + "/v1/auth/register", {
+      const registrationResponse = await fetch(apiBase.replace(/\/+$/, "") + "/v1/auth/register", {
         method: "POST",
         headers: { apikey: apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ display_name: "", email: "", password: "" }),
