@@ -61,6 +61,9 @@ for (const required of [
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
+if ((api.match(/if \(!inScope\(profile, current, key\)\)/g) ?? []).length !== 2) {
+  throw new Error('As operações de edição e exclusão devem validar o escopo com o tipo de recurso.');
+}
 for (const table of [
   'budget_sheets', 'contracts', 'fuel_records', 'incidents', 'inspections',
   'inventory_products', 'maintenance_plans', 'work_orders',
