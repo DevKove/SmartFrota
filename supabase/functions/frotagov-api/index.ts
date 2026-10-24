@@ -76,7 +76,12 @@ async function getProfile(token: string): Promise<Profile | null> {
 const MENU_PERMISSION_CODES = new Set([...["vehicles","secretarias","drivers","suppliers","work_orders","maintenance","fuel","inspections","incidents","inventory","contracts","finance","reports","users"].flatMap(module => ["read","create","update","delete"].map(action => module + ":" + action))]);
 function bearer(req: Request) { return req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? ""; }
 function allowed(profile: Profile, permission: string) { return profile.isAdmin || profile.permissions.includes(permission); }
-function inScope(profile: Profile, record: any, resourceKey?: string) {\n  if (profile.isAdmin) return true;\n  // Secretaria records are scoped by their own id, not by secretaria_id.\n  if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id);\n  return Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id);\n}
+function inScope(profile: Profile, record: any, resourceKey?: string) {
+  if (profile.isAdmin) return true;
+  // Secretaria records are scoped by their own id, not by secretaria_id.
+  if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id);
+  return Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id);
+}
 
 // Compensating cleanup prevents orphaned Auth/profile/role rows if account setup fails midway.
 async function rollbackNewUser(userId: string) {
