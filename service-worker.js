@@ -1,6 +1,6 @@
 /* SmartFrota PWA — cache apenas da interface estática; nunca armazena respostas de API ou dados pessoais. */
 const CACHE_PREFIX = 'smartfrota-pwa-';
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 const BASE_PATH = new URL('/SmartFrota/', self.location.origin);
 const APP_SHELL = [
