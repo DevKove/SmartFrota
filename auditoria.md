@@ -165,7 +165,7 @@ Esta seção substitui os status anteriores quando houver diferença. O históri
 | SF-UI-002 | A tabela administrativa apresentava códigos de função em vez das permissões realmente concedidas, e a classificação de conta pendente considerava somente funções. | A tabela mostra `permission_codes` com rótulos legíveis e considera permissões ou funções ao distinguir contas inativas de cadastros pendentes. | [Commit 7d9dd05](https://github.com/DevKove/SmartFrota/commit/7d9dd05d91474ee9cc049ce1861eef1aabb9d701) | Publicado; E2E pendente |
 | SF-UI-003 | Formulários operacionais incluíam um campo obrigatório “Responsável pelo cadastro” que a API não persistia. | Removido o campo fictício; o vínculo à secretaria continua sendo solicitado nos módulos que precisam dele. | [Commit 699acabc](https://github.com/DevKove/SmartFrota/commit/699acabc930b68d6461fd45040c933c65c49e990) | Publicado; E2E pendente |
 
-O script `scripts/validate-inline-js.mjs` agora inclui verificações de regressão para a política de senha, exibição de permissões, campo não persistido e checagem de escopo em edição e exclusão. O workflow de validação mais recente passou: [run 40098352009](https://github.com/DevKove/SmartFrota/actions/runs/40098352009).
+O script `scripts/validate-inline-js.mjs` agora inclui verificações de regressão para a política de senha, exibição de permissões, campo não persistido e checagem de escopo em edição e exclusão. Também foi atualizado o cache do PWA para v16, forçando a renovação do app shell em instalações existentes; o validador agora verifica essa versão. O workflow de validação mais recente passou: [run 40098352009](https://github.com/DevKove/SmartFrota/actions/runs/40098352009).
 
 ## Inventário funcional identificado
 
