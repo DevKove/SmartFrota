@@ -389,7 +389,7 @@ Deno.serve(async (req: Request) => {
     if (id && method === "DELETE") {
       const { data: current } = await admin.from(cfg.table).select("*").eq("id", id).is("deleted_at", null).maybeSingle();
       if (!current) return fail(404, "not_found", "Registro não encontrado.");
-      if (!inScope(profile, current)) return fail(403, "forbidden_scope", "Registro fora do seu escopo.");
+      if (!inScope(profile, current, key)) return fail(403, "forbidden_scope", "Registro fora do seu escopo.");
       const version = Number(url.searchParams.get("version"));
       if (Number.isFinite(version) && current.version !== undefined && version !== current.version) return fail(409, "version_conflict", "O registro foi alterado por outra sessão. Atualize e tente novamente.");
       const { error } = await admin.from(cfg.table).update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...(current.version !== undefined ? { version: current.version + 1 } : {}) }).eq("id", id);
