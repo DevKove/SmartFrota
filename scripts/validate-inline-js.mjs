@@ -22,7 +22,7 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
-if (!worker.includes("const CACHE_VERSION = 'v18';")) {
+if (!worker.includes("const CACHE_VERSION = 'v19';")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
@@ -44,6 +44,12 @@ if (!html.includes('data-page="audit">📊 &nbsp; Auditoria e extração') ||
     !html.includes("load('/v1/'+key,'audit-'+key)") ||
     !html.includes("auditFrom") || !html.includes("auditTo")) {
   throw new Error('Os relatórios por módulo e a central de auditoria com filtros/exportação estão incompletos.');
+}
+if (!html.includes('id="dashboardMetrics"') ||
+    !html.includes('Resumo operacional') ||
+    !html.includes('Visão geral</h1>') ||
+    !html.includes('Carregando indicadores…')) {
+  throw new Error('A visão geral deve renderizar seus componentes antes de carregar os dados da API.');
 }
 if (!html.includes('Últimas 10 ordens de serviço') ||
     !html.includes("load('/v1/work_orders','work_orders')") ||
