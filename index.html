@@ -629,7 +629,13 @@ th{color:#243f5a;background:#e5eef8}
 #loginView #showRegister:focus-visible{outline:3px solid rgba(8,127,232,.35);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){#loginView #showRegister{transition:none}}
 
-\n/* Indicador de carregamento do login — alteração restrita ao botão de autenticação. */\n#loginView #loginButton.is-loading{display:inline-flex;align-items:center;justify-content:center;gap:11px;cursor:wait;opacity:.94}\n#loginView #loginButton .login-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:smartfrota-login-spin .72s linear infinite}\n#loginView #loginButton.is-loading span:last-child{letter-spacing:.01em}\n@keyframes smartfrota-login-spin{to{transform:rotate(360deg)}}\n@media(prefers-reduced-motion:reduce){#loginView #loginButton .login-spinner{animation-duration:1.8s}}\n</style>
+\n/* Indicador de carregamento do login — alteração restrita ao botão de autenticação. */\n#loginView #loginButton.is-loading{display:inline-flex;align-items:center;justify-content:center;gap:11px;cursor:wait;opacity:.94}\n#loginView #loginButton .login-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:smartfrota-login-spin .72s linear infinite}\n#loginView #loginButton.is-loading span:last-child{letter-spacing:.01em}\n@keyframes smartfrota-login-spin{to{transform:rotate(360deg)}}\n@media(prefers-reduced-motion:reduce){#loginView #loginButton .login-spinner{animation-duration:1.8s}}\n
+/* Link externo de consulta de peças na navegação lateral */
+.sidebar .nav a.nav-external{display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;padding:9px 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:#eaf3fb!important;text-decoration:none;font-size:12px;font-weight:550;line-height:1.5;transition:background .2s ease,border-color .2s ease,transform .2s ease}
+.sidebar .nav a.nav-external svg{flex:0 0 17px}
+.sidebar .nav a.nav-external:hover,.sidebar .nav a.nav-external:focus-visible{background:linear-gradient(90deg,#087fe8,#0785fa);border-color:#4caeff44;color:#fff!important;outline:none;box-shadow:0 4px 12px #0069c84a}
+.sidebar .nav a.nav-external .nav-external-arrow{margin-left:auto;font-size:15px;opacity:.8}
+</style>
 
 <style id="smartfrota-glass-theme">
 /* Tema global alinhado à tela de login: fundo fotográfico, camadas azuis e superfícies translúcidas */
@@ -1124,12 +1130,6 @@ async function renderList(key){
    if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'smartfrota-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
    const all=ev.target.closest('[data-workspace-export]');if(!all)return;
    if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script>
-<style id="smartfrota-consulta-peca-link">
-#appView .sidebar .nav a.nav-external{display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;padding:9px 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:#eaf3fb!important;text-decoration:none;font-size:12px;font-weight:550;line-height:1.5;transition:background .2s ease,border-color .2s ease,transform .2s ease}
-#appView .sidebar .nav a.nav-external svg{flex:0 0 17px}
-#appView .sidebar .nav a.nav-external:hover,#appView .sidebar .nav a.nav-external:focus-visible{background:linear-gradient(90deg,#087fe8,#0785fa);border-color:#4caeff44;color:#fff!important;outline:none;box-shadow:0 4px 12px #0069c84a}
-#appView .sidebar .nav a.nav-external .nav-external-arrow{margin-left:auto;font-size:15px;opacity:.8}
-</style>
 
 </body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
    const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
