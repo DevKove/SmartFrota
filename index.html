@@ -850,8 +850,8 @@ th{color:#243f5a;background:#e5eef8}
   <form id="registerForm" class="login-card hidden" novalidate><div class="eyebrow">Solicitação de acesso</div><h2>Cadastre-se</h2><p class="muted">Preencha seus dados. O acesso ficará bloqueado até a aprovação do administrador.</p>
   <label for="registerName">Nome completo</label><input id="registerName" name="display_name" type="text" autocomplete="name" required minlength="2" maxlength="160" placeholder="Seu nome completo">
   <label for="registerEmail">E-mail institucional</label><input id="registerEmail" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="nome@prefeitura.gov.br">
-  <label for="registerPassword">Criar senha (mín. 10 caracteres)</label><input id="registerPassword" name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="1024" placeholder="Crie uma senha forte">
-  <label for="registerPasswordConfirm">Confirmar senha</label><input id="registerPasswordConfirm" type="password" autocomplete="new-password" required minlength="10" maxlength="1024" placeholder="Digite a senha novamente">
+  <label for="registerPassword">Criar senha (mín. 14 caracteres)</label><input id="registerPassword" name="password" type="password" autocomplete="new-password" required minlength="14" maxlength="1024" placeholder="Crie uma senha forte">
+  <label for="registerPasswordConfirm">Confirmar senha</label><input id="registerPasswordConfirm" type="password" autocomplete="new-password" required minlength="14" maxlength="1024" placeholder="Digite a senha novamente">
   <button id="registerButton" type="submit">Solicitar cadastro</button><div id="registerMessage" class="error" role="status" aria-live="polite"></div><p class="notice">Após enviar, aguarde a aprovação e a atribuição de um perfil pelo administrador. O cadastro não libera o acesso automaticamente.</p>
   <button id="backToLogin" class="secondary" type="button">Voltar para entrar</button></form>
   <div class="login-institutional-contact" aria-label="Contato da Secretaria Municipal de Serviços Públicos"><strong>Secretaria Municipal de Serviços Públicos</strong><span>Endereço: R. Benedito Antunes Ribeiro, 451 — Jd. M. da Glória, Araçoiaba da Serra — SP, 18190-025</span><a href="tel:+551532811623">Telefone: (15) 3281-1623</a></div><footer class="login-legal-footer" aria-label="Informações legais"><span>© 2026 SmartFrota</span><a href="./terms.html">Termos de Uso</a><a href="./privacy.html">Política de Privacidade</a></footer>
@@ -1404,13 +1404,13 @@ function renderPasswordChange(){
  document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
  $('sidebar').classList.remove('open');
  const c=$('pageContent');
- c.innerHTML='<div class="eyebrow">Segurança da conta</div><h1 class="page-title">Defina sua nova senha</h1><p class="muted">Por segurança, troque a senha temporária antes de continuar. Use pelo menos 10 caracteres.</p><section class="panel" style="max-width:620px"><form id="passwordChangeForm" novalidate><label for="currentPassword">Senha temporária atual</label><input id="currentPassword" type="password" autocomplete="current-password" required maxlength="1024"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="1024"><label for="confirmPassword">Confirme a nova senha</label><input id="confirmPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="1024"><div id="passwordChangeError" class="error" role="alert" aria-live="polite"></div><button id="passwordChangeButton" type="submit">Salvar nova senha</button></form></section>';
+ c.innerHTML='<div class="eyebrow">Segurança da conta</div><h1 class="page-title">Defina sua nova senha</h1><p class="muted">Por segurança, troque a senha temporária antes de continuar. Use pelo menos 14 caracteres.</p><section class="panel" style="max-width:620px"><form id="passwordChangeForm" novalidate><label for="currentPassword">Senha temporária atual</label><input id="currentPassword" type="password" autocomplete="current-password" required maxlength="1024"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" required minlength="14" maxlength="1024"><label for="confirmPassword">Confirme a nova senha</label><input id="confirmPassword" type="password" autocomplete="new-password" required minlength="14" maxlength="1024"><div id="passwordChangeError" class="error" role="alert" aria-live="polite"></div><button id="passwordChangeButton" type="submit">Salvar nova senha</button></form></section>';
  const form=$('passwordChangeForm');
  form.addEventListener('submit',async e=>{
   e.preventDefault();
   const current=$('currentPassword').value,newPassword=$('newPassword').value,confirmation=$('confirmPassword').value,msg=$('passwordChangeError'),button=$('passwordChangeButton');
   msg.textContent='';
-  if(newPassword.length<10){msg.textContent='A nova senha deve ter pelo menos 10 caracteres.';return;}
+  if(newPassword.length<14){msg.textContent='A nova senha deve ter pelo menos 14 caracteres.';return;}
   if(newPassword!==confirmation){msg.textContent='A confirmação não corresponde à nova senha.';return;}
   if(newPassword===current){msg.textContent='Escolha uma senha diferente da senha temporária.';return;}
   button.disabled=true;button.textContent='Salvando…';
@@ -1442,7 +1442,7 @@ $('registerForm').addEventListener('submit',async e=>{
  const display_name=$('registerName').value.trim(),email=$('registerEmail').value.trim().toLowerCase(),password=$('registerPassword').value,confirmPassword=$('registerPasswordConfirm').value;
  msg.classList.remove('error');msg.textContent='';
  if(display_name.length<2){msg.classList.add('error');msg.textContent='Informe seu nome completo.';return}
- if(password.length<10){msg.classList.add('error');msg.textContent='A senha deve ter pelo menos 10 caracteres.';return}
+ if(password.length<14){msg.classList.add('error');msg.textContent='A senha deve ter pelo menos 14 caracteres.';return}
  if(password!==confirmPassword){msg.classList.add('error');msg.textContent='As senhas não coincidem.';return}
  button.disabled=true;button.textContent='Enviando solicitação…';
  try{
