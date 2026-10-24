@@ -10,6 +10,7 @@ on:
       - "manifest.webmanifest"
       - "service-worker.js"
       - "icons/**"
+      - "scripts/generate-pwa-icons.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -40,6 +41,8 @@ jobs:
           cp manifest.webmanifest dist/manifest.webmanifest
           cp service-worker.js dist/service-worker.js
           cp -R icons dist/icons
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/generate-pwa-icons.py --source icons/logo.jpg --output dist/icons
           touch dist/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
