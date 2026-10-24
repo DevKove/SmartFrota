@@ -62,15 +62,17 @@ async function getProfile(token: string): Promise<Profile | null> {
   const id = authData.user.id;
   const { data: user, error } = await admin.from("users").select("id,email,display_name,is_active,must_change_password,deleted_at").eq("id", id).maybeSingle();
   if (error || !user || !user.is_active || user.deleted_at) return null;
-  const [{ data: roleRows }, { data: permissionRows }, { data: scopeRows }] = await Promise.all([
+  const [{ data: roleRows }, { data: permissionRows, error: permissionError }, { data: scopeRows }] = await Promise.all([
     admin.from("user_roles").select("roles(code)").eq("user_id", id),
-    admin.from("permissions").select("code,role_permissions!inner(role_id,roles!inner(code))").in("role_permissions.role_id", (await admin.from("user_roles").select("role_id").eq("user_id", id)).data?.map(x => x.role_id) ?? []),
+    admin.from("user_menu_permissions").select("permission_code").eq("user_id", id),
     admin.from("user_secretarias").select("secretaria_id").eq("user_id", id).lte("valid_from", new Date().toISOString()).or("valid_until.is.null,valid_until.gt." + new Date().toISOString()),
   ]);
+  if (permissionError) { console.error("user menu permissions query failed", { code: permissionError.code }); return null; }
   const roles = (roleRows ?? []).map((x: any) => x.roles?.code).filter(Boolean);
-  const permissions = (permissionRows ?? []).map((x: any) => x.code).filter(Boolean);
+  const permissions = (permissionRows ?? []).map((x: any) => x.permission_code).filter(Boolean);
   return { id, email: user.email, display_name: user.display_name, is_active: user.is_active, must_change_password: user.must_change_password, roles, permissions, secretaria_ids: (scopeRows ?? []).map((x: any) => x.secretaria_id), isAdmin: roles.includes("system_admin") };
 }
+const MENU_PERMISSION_CODES = new Set([...["vehicles","secretarias","drivers","suppliers","work_orders","maintenance","fuel","inspections","incidents","inventory","contracts","finance","reports","users"].flatMap(module => ["read","create","update","delete"].map(action => module + ":" + action))]);
 function bearer(req: Request) { return req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? ""; }
 function allowed(profile: Profile, permission: string) { return profile.isAdmin || profile.permissions.includes(permission); }
 function inScope(profile: Profile, record: any) { return profile.isAdmin || (Boolean(record?.secretaria_id) && profile.secretaria_ids.includes(record.secretaria_id)); }
@@ -213,7 +215,8 @@ Deno.serve(async (req: Request) => {
         if (error) return fail(500, "query_failed", "Falha ao consultar usuários.");
         const rows = await Promise.all((data ?? []).map(async (u: any) => {
           const [{ data: rr }, { data: ss }] = await Promise.all([admin.from("user_roles").select("roles(code)").eq("user_id", u.id), admin.from("user_secretarias").select("secretaria_id").eq("user_id", u.id)]);
-          return { ...u, roles: (rr ?? []).map((x: any) => x.roles?.code).filter(Boolean), secretaria_ids: (ss ?? []).map((x: any) => x.secretaria_id) };
+          const { data: pp } = await admin.from("user_menu_permissions").select("permission_code").eq("user_id", u.id);
+          return { ...u, roles: (rr ?? []).map((x: any) => x.roles?.code).filter(Boolean), permission_codes: (pp ?? []).map((x: any) => x.permission_code), secretaria_ids: (ss ?? []).map((x: any) => x.secretaria_id) };
         }));
         return json({ data: rows });
       }
@@ -221,24 +224,22 @@ Deno.serve(async (req: Request) => {
         if (!profile.isAdmin && !allowed(profile, "users:create")) return fail(403, "forbidden", "Você não possui permissão para criar usuários.");
         const b = await req.json().catch(() => ({}));
         const email = String(b.email ?? "").trim().toLowerCase(), display_name = String(b.display_name ?? "").trim(), temporary_password = String(b.temporary_password ?? "");
-        const role_codes = Array.isArray(b.role_codes) ? b.role_codes : [], secretaria_ids = Array.isArray(b.secretaria_ids) ? b.secretaria_ids : [];
-        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 14 || !role_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 14 caracteres ou mais e pelo menos um perfil.");
-        if (!profile.isAdmin && role_codes.includes("system_admin")) return fail(403, "forbidden_role", "Somente o administrador do sistema pode atribuir esse perfil.");
+        const permission_codes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x: unknown) => String(x)))] : [];
+        const secretaria_ids = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x: unknown) => String(x)))] : [];
+        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 14 || !permission_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 14 caracteres ou mais e pelo menos uma permissão.");
+        if (permission_codes.some((code: string) => !MENU_PERMISSION_CODES.has(code))) return fail(400, "invalid_permission", "Uma ou mais permissões selecionadas são inválidas.");
         if (!profile.isAdmin && secretaria_ids.some((x: string) => !profile.secretaria_ids.includes(x))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
         const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: temporary_password, email_confirm: true, user_metadata: { display_name } });
         if (createError || !created.user) return fail(400, "user_create_failed", createError?.message ?? "Não foi possível criar a conta.");
         const { error: insertError } = await admin.from("users").insert({ id: created.user.id, email, display_name, password_hash: "SUPABASE_AUTH_ONLY:" + crypto.randomUUID(), is_active: true, must_change_password: true, created_by: profile.id });
         if (insertError) { await rollbackNewUser(created.user.id); return fail(400, "user_profile_create_failed", "Não foi possível criar o perfil da conta; a criação foi desfeita."); }
-        const { data: roleRows } = await admin.from("roles").select("id,code").in("code", role_codes);
-        if (!roleRows || roleRows.length !== new Set(role_codes).size) { await rollbackNewUser(created.user.id); return fail(400, "invalid_role", "Um ou mais perfis não existem; a criação da conta foi desfeita."); }
-        const links = roleRows.map((r: any) => ({ user_id: created.user.id, role_id: r.id }));
-        const { error: roleError } = await admin.from("user_roles").insert(links);
-        if (roleError) { await rollbackNewUser(created.user.id); return fail(500, "role_assignment_failed", "Não foi possível atribuir o perfil; a criação da conta foi desfeita. Tente novamente."); }
+        const { error: permissionError } = await admin.from("user_menu_permissions").insert(permission_codes.map((permission_code: string) => ({ user_id: created.user.id, permission_code, granted_by: profile.id })));
+        if (permissionError) { await rollbackNewUser(created.user.id); return fail(500, "permission_assignment_failed", "Não foi possível salvar as permissões; a criação da conta foi desfeita."); }
         if (secretaria_ids.length) {
           const { error: scopeError } = await admin.from("user_secretarias").insert(secretaria_ids.map((secretaria_id: string) => ({ user_id: created.user.id, secretaria_id })));
           if (scopeError) { await rollbackNewUser(created.user.id); return fail(500, "scope_assignment_failed", "Não foi possível vincular as secretarias; a criação da conta foi desfeita. Tente novamente."); }
         }
-        return json({ data: { id: created.user.id, email, display_name, is_active: true, must_change_password: true, roles: role_codes, secretaria_ids } }, 201);
+        return json({ data: { id: created.user.id, email, display_name, is_active: true, must_change_password: true, roles: [], permission_codes, secretaria_ids } }, 201);
       }
       if (id && method === "PATCH") {
         if (!profile.isAdmin) return fail(403, "forbidden", "Somente o administrador principal pode editar contas.");
@@ -259,17 +260,11 @@ Deno.serve(async (req: Request) => {
         const password = Object.prototype.hasOwnProperty.call(b,"temporary_password") ? String(b.temporary_password ?? "") : "";
         if (password && password.length < 14) return fail(400,"validation_error","A senha temporária deve ter ao menos 14 caracteres.");
         if (typeof b.is_active === "boolean") changes.is_active = b.is_active;
-        const roleCodes = Array.isArray(b.role_codes) ? [...new Set(b.role_codes.map((x:unknown)=>String(x)))] : null;
+        const permissionCodes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x:unknown)=>String(x)))] : null;
         const secretariaIds = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x:unknown)=>String(x)))] : null;
-        if (roleCodes) {
-          if (!roleCodes.length) return fail(400,"invalid_role","O usuário precisa ter ao menos um perfil.");
-          const {data:rr,error:re}=await admin.from("roles").select("id,code").in("code",roleCodes);
-          if(re || !rr || rr.length!==roleCodes.length) return fail(400,"invalid_role","Um ou mais perfis não existem.");
-          if(roleCodes.includes("system_admin")) {
-            const {data:admins}=await admin.from("user_roles").select("user_id,roles!inner(code)").eq("roles.code","system_admin");
-            const {data:active}=await admin.from("users").select("id").in("id",(admins??[]).map((x:any)=>x.user_id)).eq("is_active",true).is("deleted_at",null);
-            if(!active?.some((x:any)=>x.id===id) && !profile.isAdmin) return fail(403,"forbidden_role","Apenas o administrador principal pode conceder este perfil.");
-          }
+        if (permissionCodes) {
+          if (permissionCodes.some((code:string)=>!MENU_PERMISSION_CODES.has(code))) return fail(400,"invalid_permission","Uma ou mais permissões selecionadas são inválidas.");
+          if (changes.is_active !== false && !permissionCodes.length) return fail(400,"invalid_permission","Conceda ao menos uma permissão antes de ativar a conta.");
         }
         if (secretariaIds) {
           const {data:ds,error:de}=await admin.from("secretarias").select("id").in("id",secretariaIds).is("deleted_at",null);
@@ -292,12 +287,13 @@ Deno.serve(async (req: Request) => {
         if(typeof changes.is_active==="boolean") authChanges.ban_duration=changes.is_active?"none":"876000h";
         if(Object.keys(authChanges).length){const {error}=await admin.auth.admin.updateUserById(id,authChanges as any);if(error)return fail(400,"auth_update_failed","Não foi possível atualizar a autenticação da conta.");}
         if(Object.keys(changes).length){changes.updated_at=new Date().toISOString();const {error}=await admin.from("users").update(changes).eq("id",id);if(error)return fail(400,"user_update_failed","Não foi possível salvar o perfil do usuário.");}
-        if(roleCodes){const {data:rr}=await admin.from("roles").select("id,code").in("code",roleCodes);const {error:de}=await admin.from("user_roles").delete().eq("user_id",id);if(de)return fail(500,"role_update_failed","Não foi possível atualizar os perfis.");const {error:ie}=await admin.from("user_roles").insert((rr??[]).map((x:any)=>({user_id:id,role_id:x.id})));if(ie)return fail(500,"role_update_failed","Não foi possível salvar os perfis.");}
+        if(permissionCodes){const {error:de}=await admin.from("user_menu_permissions").delete().eq("user_id",id);if(de)return fail(500,"permission_update_failed","Não foi possível atualizar as permissões.");if(permissionCodes.length){const {error:ie}=await admin.from("user_menu_permissions").insert(permissionCodes.map((permission_code:string)=>({user_id:id,permission_code,granted_by:profile.id})));if(ie)return fail(500,"permission_update_failed","Não foi possível salvar as permissões.");}}
         if(secretariaIds){const {error:de}=await admin.from("user_secretarias").delete().eq("user_id",id);if(de)return fail(500,"scope_update_failed","Não foi possível atualizar as secretarias.");if(secretariaIds.length){const {error:ie}=await admin.from("user_secretarias").insert(secretariaIds.map((secretaria_id:string)=>({user_id:id,secretaria_id})));if(ie)return fail(500,"scope_update_failed","Não foi possível salvar as secretarias.");}}
         const {data:u}=await admin.from("users").select("id,email,display_name,is_active,must_change_password,updated_at").eq("id",id).single();
         const {data:rr}=await admin.from("user_roles").select("roles(code)").eq("user_id",id);
         const {data:ss}=await admin.from("user_secretarias").select("secretaria_id").eq("user_id",id);
-        return json({data:{...u,roles:(rr??[]).map((x:any)=>x.roles?.code).filter(Boolean),secretaria_ids:(ss??[]).map((x:any)=>x.secretaria_id)}});
+        const {data:pp}=await admin.from("user_menu_permissions").select("permission_code").eq("user_id",id);
+        return json({data:{...u,roles:(rr??[]).map((x:any)=>x.roles?.code).filter(Boolean),permission_codes:(pp??[]).map((x:any)=>x.permission_code),secretaria_ids:(ss??[]).map((x:any)=>x.secretaria_id)}});
       }
       if (id && method === "DELETE") {
         if(!profile.isAdmin) return fail(403,"forbidden","Somente o administrador principal pode desativar contas.");
