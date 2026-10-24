@@ -1075,55 +1075,7 @@ async function renderList(key){
    const section=ev.target.closest('[data-section-export]');
    if(section){const g=groups.find(x=>x.key===section.dataset.sectionExport),rows=dataset[section.dataset.sectionExport]||[];if(!rows.length){message.textContent='Não há registros para exportar nesta seção.';return}exportRows(rows,section.dataset.format,'smartfrota-'+item.sigla+'-'+section.dataset.sectionExport+'-'+new Date().toISOString().slice(0,10),g.fields.map(([k])=>k));message.textContent='Exportação preparada.';return}
    const all=ev.target.closest('[data-workspace-export]');if(!all)return;
-   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script>
-<style id="smartfrota-registration-button-polish">
-/* Cadastro em destaque sem competir com a ação principal de entrar */
-.login-card #showRegister{
-  position:relative;isolation:isolate;display:inline-flex!important;align-items:center;justify-content:center;gap:9px;
-  width:auto;min-height:42px;margin:10px auto 0!important;padding:10px 17px!important;
-  color:#075db5!important;font-size:13px;font-weight:800;letter-spacing:.01em;
-  background:linear-gradient(180deg,#fff 0%,#eaf5ff 100%)!important;
-  border:1px solid #a9d4fb!important;border-radius:999px!important;
-  box-shadow:0 4px 0 #d4e9fb,0 8px 18px #087fe81a!important;
-  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;
-}
-.login-card #showRegister:before{
-  content:"+";display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;
-  color:#fff;background:linear-gradient(145deg,#1598f5,#075dc1);font-size:18px;line-height:1;
-  box-shadow:inset 0 1px 0 #ffffff80,0 2px 5px #087fe844;
-}
-.login-card #showRegister:hover{
-  transform:translateY(-2px);border-color:#65b6f5!important;
-  background:linear-gradient(180deg,#fff 0%,#dcefff 100%)!important;
-  box-shadow:0 5px 0 #c4e1fb,0 12px 24px #087fe82a!important;
-}
-.login-card #showRegister:active{transform:translateY(1px);box-shadow:0 1px 0 #c4e1fb,0 3px 8px #087fe81a!important}
-.login-card #showRegister:focus-visible,#registerButton:focus-visible,#backToLogin:focus-visible{
-  outline:3px solid #35a9ff!important;outline-offset:3px;
-}
-.login-card #registerButton{
-  min-height:49px;margin-top:20px;border:1px solid #1683e6;
-  border-radius:10px;color:#fff;font-weight:800;letter-spacing:.01em;
-  background:linear-gradient(115deg,#0a8bf0 0%,#0870d8 55%,#0756b4 100%);
-  box-shadow:inset 0 1px 0 #ffffff55,0 7px 0 #064a98,0 12px 22px #087fe82e;
-}
-.login-card #registerButton:hover:not(:disabled){
-  background:linear-gradient(115deg,#20a0ff 0%,#0879e6 55%,#075fc5 100%);
-  box-shadow:inset 0 1px 0 #ffffff66,0 8px 0 #064a98,0 16px 28px #087fe83b;
-}
-.login-card #registerButton:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 1px 0 #ffffff44,0 3px 0 #064a98,0 6px 12px #087fe822}
-.login-card #registerButton:disabled{filter:saturate(.75);box-shadow:0 4px 0 #064a98}
-.login-card #backToLogin{
-  min-height:43px;margin-top:14px!important;color:#355879!important;
-  background:linear-gradient(180deg,#fff,#f0f6fc)!important;border:1px solid #d1e1f0!important;
-  box-shadow:0 3px 0 #e0eaf4,0 5px 12px #173d5c0b!important;
-}
-.login-card #backToLogin:hover{background:#eaf4ff!important;border-color:#a8cbe9!important}
-@media(max-width:480px){.login-card #showRegister{min-height:40px;padding:9px 15px!important}.login-card #registerButton{min-height:47px}}
-@media(prefers-reduced-motion:reduce){.login-card #showRegister,.login-card #registerButton,.login-card #backToLogin{transition:none}}
-</style>
-
-</body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
+   if(all.dataset.workspaceExport==='print'){const w=window.open('','_blank');if(!w){message.textContent='O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.';return}w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — '+esc(item.nome||'Secretaria')+'</title><style>body{font:12px Arial,sans-serif;color:#172033;padding:24px}h1{font-size:22px}h2{margin-top:28px;border-bottom:1px solid #ccc;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:10px;margin-bottom:20px}th,td{border:1px solid #ccc;padding:5px;text-align:left}button{display:none}@media print{body{padding:0}section{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}</style></head><body><h1>Relatório da Secretaria: '+esc(item.nome||'')+'</h1><p>Sigla: '+esc(item.sigla||'—')+' · Gerado em '+new Date().toLocaleString('pt-BR')+'</p>'+groups.map(g=>'<section><h2>'+esc(g.title)+' ('+(dataset[g.key]||[]).length+')</h2>'+renderRows(g,dataset[g.key]||[])+'</section>').join('')+'<script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();message.textContent='Relatório aberto para impressão ou salvamento em PDF.';return}
    const flat=groups.flatMap(g=>(dataset[g.key]||[]).map(row=>({secao:g.title,...row})));
    if(!flat.length){message.textContent='Não há registros para exportar.';return}
    if(all.dataset.workspaceExport==='json'){exportRows(flat,'json','smartfrota-'+item.sigla+'-relatorio-'+new Date().toISOString().slice(0,10));message.textContent='Arquivo JSON preparado.';return}
