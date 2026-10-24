@@ -4,7 +4,7 @@
   "short_name": "SmartFrota",
   "description": "Gestão pública de veículos, manutenção, abastecimento e custos da frota.",
   "lang": "pt-BR",
-  "start_url": "/SmartFrota/?source=pwa&v=9",
+  "start_url": "/SmartFrota/?source=pwa&v=10",
   "scope": "/SmartFrota/",
   "display": "standalone",
   "orientation": "any",
@@ -28,6 +28,21 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/SmartFrota/screenshots/smartfrota-desktop.png?v=1",
+      "sizes": "1440x1000",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tela inicial do SmartFrota em computador"
+    },
+    {
+      "src": "/SmartFrota/screenshots/smartfrota-mobile.png?v=1",
+      "sizes": "390x844",
+      "type": "image/png",
+      "label": "Tela inicial do SmartFrota em celular"
     }
   ]
 }
