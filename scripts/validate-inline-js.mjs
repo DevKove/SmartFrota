@@ -52,6 +52,9 @@ for (const required of [
   'async function rollbackNewUser(userId: string)',
   'await rollbackNewUser(created.user.id)',
   'admin.auth.admin.signOut(token, "local")',
+  'path === "/v1/auth/register"',
+  'is_active: false, must_change_password: false',
+  'pending_approval',
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
