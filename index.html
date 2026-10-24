@@ -1484,6 +1484,18 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+
+<style id="smartfrota-independent-sidebar-scroll">
+/* Rolagem independente: somente a lista do menu rola; a página principal mantém sua própria rolagem. */
+#appView .sidebar{align-self:start;isolation:isolate}
+#appView .sidebar .nav{overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-y; -webkit-overflow-scrolling:touch}
+#appView .main{min-width:0;min-height:100vh;min-height:100dvh}
+@media(max-width:900px){
+ #appView .sidebar.open{overscroll-behavior:contain}
+ #appView .sidebar .nav{max-height:none}
+}
+</style>
+
 <style id="smartfrota-sidebar-accessibility-fix">
 /* Menu lateral: itens nunca ficam comprimidos nem atrás do brasão */
 #appView .sidebar{box-sizing:border-box;min-height:0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow:hidden;gap:14px}
