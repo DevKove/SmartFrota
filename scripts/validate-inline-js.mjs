@@ -25,6 +25,12 @@ try {
 if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
   throw new Error('Validação de senha do frontend está abaixo da política de 14 caracteres da API.');
 }
+if (!html.includes("(u.permission_codes||[]).map(permissionLabel).join(', ')")) {
+  throw new Error('A listagem administrativa não exibe as permissões efetivamente atribuídas.');
+}
+if (!html.includes("((u.permission_codes||[]).length||(u.roles||[]).length)?'Inativo':'Pendente de aprovação'")) {
+  throw new Error('A classificação de contas pendentes não considera as permissões atribuídas.');
+}
 if (/\basync\s+async\s+function\b/.test(html)) {
   throw new Error('Declaração async duplicada encontrada.');
 }
