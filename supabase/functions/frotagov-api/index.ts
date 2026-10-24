@@ -94,10 +94,9 @@ function cleanFields(body: Record<string, unknown>, fields: string[]) {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const url = new URL(req.url);
-  // A URL pode chegar com o prefixo completo da Edge Function ou já relativa.
-  // Extraia a rota da API pelo marcador /v1/ para não cair no fluxo protegido por engano.
-  const marker = url.pathname.indexOf("/v1/");
-  const rawPath = marker >= 0 ? url.pathname.slice(marker) : url.pathname.replace(/^\/functions\/v1\/frotagov-api(?=\/|$)/, "");
+  // Remove primeiro o prefixo da Edge Function; ele também contém "/v1/".
+  // Só depois disso a rota da API é interpretada, evitando confundir os dois prefixos.
+  const rawPath = url.pathname.replace(/^\/functions\/v1\/frotagov-api(?=\/|$)/, "");
   const path = rawPath.replace(/\/+$/, "") || "/";
   try {
     if (path === "/v1/auth/register" && req.method === "POST") {
