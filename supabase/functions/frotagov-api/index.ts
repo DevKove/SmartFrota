@@ -244,7 +244,7 @@ Deno.serve(async (req: Request) => {
     if (path === "/v1/auth/change-password" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const current = String(body.current_password ?? ""), next = String(body.new_password ?? "");
-      if (next.length < 14 || next.length > 1024 || next === current) return fail(400, "validation_error", "A nova senha deve ter pelo menos 14 caracteres e ser diferente da atual.");
+      if (next.length < 10 || next.length > 1024 || next === current) return fail(400, "validation_error", "A nova senha deve ter pelo menos 10 caracteres e ser diferente da atual.");
       const verifyClient = createClient(SUPABASE_URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
       const { data: verified, error: verifyError } = await verifyClient.auth.signInWithPassword({ email: profile.email, password: current });
       if (verifyError || !verified.session) return fail(400, "current_password_invalid", "A senha atual está incorreta.");
@@ -303,7 +303,7 @@ Deno.serve(async (req: Request) => {
         const email = String(b.email ?? "").trim().toLowerCase(), display_name = String(b.display_name ?? "").trim(), temporary_password = String(b.temporary_password ?? "");
         const permission_codes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x: unknown) => String(x)))] : [];
         const secretaria_ids = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x: unknown) => String(x)))] : [];
-        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 14 || !permission_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 14 caracteres ou mais e pelo menos uma permissão.");
+        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 10 || !permission_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 10 caracteres ou mais e pelo menos uma permissão.");
         if (permission_codes.some((code: string) => !MENU_PERMISSION_CODES.has(code))) return fail(400, "invalid_permission", "Uma ou mais permissões selecionadas são inválidas.");
         if (!profile.isAdmin && secretaria_ids.some((x: string) => !profile.secretaria_ids.includes(x))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
         const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: temporary_password, email_confirm: true, user_metadata: { display_name } });
@@ -335,7 +335,7 @@ Deno.serve(async (req: Request) => {
           changes.email = email;
         }
         const password = Object.prototype.hasOwnProperty.call(b,"temporary_password") ? String(b.temporary_password ?? "") : "";
-        if (password && password.length < 14) return fail(400,"validation_error","A senha temporária deve ter ao menos 14 caracteres.");
+        if (password && password.length < 10) return fail(400,"validation_error","A senha temporária deve ter ao menos 10 caracteres.");
         if (typeof b.is_active === "boolean") changes.is_active = b.is_active;
         const permissionCodes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x:unknown)=>String(x)))] : null;
         const secretariaIds = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x:unknown)=>String(x)))] : null;
