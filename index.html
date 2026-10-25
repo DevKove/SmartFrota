@@ -1112,6 +1112,19 @@ window.addEventListener("beforeinstallprompt", function (event) {
 'use strict';
 const API='https://jyfphgnysvsrqdlbogoh.supabase.co/functions/v1/frotagov-api';
 const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
+// Mapa compartilhado: evita ReferenceError em renderizadores que exibem situações.
+const GLOBAL_STATUS_NAMES=Object.freeze({
+ active:'Ativo',inactive:'Inativo',available:'Disponível',maintenance:'Em manutenção',
+ retired:'Baixado',blocked:'Bloqueado',suspended:'Suspenso',requested:'Solicitada',
+ awaiting_approval:'Aguardando aprovação',approved:'Aprovada',in_progress:'Em andamento',
+ waiting_parts:'Aguardando peças',completed:'Concluída',rejected:'Rejeitada',
+ cancelled:'Cancelada',canceled:'Cancelada',open:'Aberta',opened:'Aberta',
+ pending:'Pendente',closed:'Encerrada',on_hold:'Pausada',investigating:'Em apuração',
+ resolved:'Resolvida',attention:'Requer atenção',draft:'Rascunho',expired:'Expirado',
+ terminated:'Encerrado',low:'Baixa',normal:'Normal',medium:'Média',high:'Alta',
+ urgent:'Urgente',critical:'Crítica',true:'Sim',false:'Não'
+});
+const statusNames=GLOBAL_STATUS_NAMES;
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
 const activeRequestTargets=new Map();
