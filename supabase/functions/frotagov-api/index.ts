@@ -407,7 +407,7 @@ Deno.serve(async (req: Request) => {
     if (cfg.readOnly && method !== "GET") return fail(405, "method_not_allowed", "Este recurso está disponível somente para consulta.");
     const action = method === "GET" ? "read" : method === "POST" ? "create" : method === "PATCH" ? "update" : method === "DELETE" ? "delete" : "";
     if (!action || !["GET","POST","PATCH","DELETE"].includes(method)) return fail(405, "method_not_allowed", "Método não permitido.");
-    if (!allowed(profile, permission + ":" + action)) return fail(403, "forbidden", "Você não possui permissão para esta operação.");
+    if (!allowed(profile, permission + ":" + action) && !(key === "work_orders" && method === "PATCH" && !profile.isAdmin)) return fail(403, "forbidden", "Você não possui permissão para esta operação.");
     if (method === "GET" && !id) {
       let q = admin.from(cfg.table).select("*").is("deleted_at", null).order("created_at", { ascending: false }).limit(1000);
       if (!profile.isAdmin) {
@@ -462,9 +462,11 @@ Deno.serve(async (req: Request) => {
       const b = await req.json().catch(() => ({}));
       const { data: current, error: findError } = await admin.from(cfg.table).select("*").eq("id", id).is("deleted_at", null).maybeSingle();
       if (findError || !current) return fail(404, "not_found", "Registro não encontrado.");
+      if (key === "work_orders" && !profile.isAdmin && String(current.requested_by) !== String(profile.id)) return fail(403, "forbidden_owner", "Somente o administrador ou o usuário que iniciou esta ordem pode editá-la.");
       if (!inScope(profile, current, key)) return fail(403, "forbidden_scope", "Registro fora do seu escopo.");
       if (b.expected_version !== undefined && Number(b.expected_version) !== current.version) return fail(409, "version_conflict", "O registro foi alterado por outra sessão. Atualize e tente novamente.");
       const payload = cleanFields(b, cfg.fields);
+      if (key === "work_orders") payload.requested_by = current.requested_by;
       if (!profile.isAdmin && payload.secretaria_id && !profile.secretaria_ids.includes(String(payload.secretaria_id))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
       if (["work_orders","fuel_records","inspections","incidents","maintenance_plans"].includes(key)) {
         // Validate the effective vehicle/secretaria pair, including partial updates that change only secretaria_id.
