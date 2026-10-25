@@ -1078,7 +1078,7 @@ function requestLoadingTarget(path,method){
  if(urlPath.includes('/dashboard/summary'))return $('dashboardMetrics')||$('connectionMessage');
  if(urlPath.includes('/work_orders'))return state.page==='dashboard'?$('recentWorkOrders'):state.page==='work_orders'?$('listContent'):null;
  if(state.page==='audit')return $('auditResults')||$('auditTable')||null;
- const match=urlPath.match(/\\/v1\\/([^/]+)/);
+ const match=urlPath.match(/\/v1\/([^/]+)/);
  if(match&&match[1]===state.page)return $('listContent')||$('formPanel')||null;
  if(verb!=='GET'&&$('formPanel')&&!$('formPanel').classList.contains('hidden'))return $('formPanel');
  return null;
