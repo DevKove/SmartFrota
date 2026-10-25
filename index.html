@@ -1247,6 +1247,7 @@ async function renderList(key){
  let secretariaLabels={};
  const priorityLabels={low:'Baixa',normal:'Normal',medium:'Média',high:'Alta',urgent:'Urgente'};
  const workOrderStatusLabels={requested:'Solicitada',awaiting_approval:'Aguardando aprovação',approved:'Aprovada',in_progress:'Em andamento',waiting_parts:'Aguardando peças',completed:'Concluída',rejected:'Rejeitada',cancelled:'Cancelada',canceled:'Cancelada',open:'Aberta',opened:'Aberta',pending:'Pendente',closed:'Encerrada',on_hold:'Pausada'};
+ const statusNames={active:'Ativo',inactive:'Inativo',available:'Disponível',maintenance:'Em manutenção',retired:'Baixado',blocked:'Bloqueado',suspended:'Suspenso',requested:'Solicitada',awaiting_approval:'Aguardando aprovação',approved:'Aprovada',in_progress:'Em andamento',waiting_parts:'Aguardando peças',completed:'Concluída',rejected:'Rejeitada',cancelled:'Cancelada',canceled:'Cancelada',open:'Aberta',opened:'Aberta',pending:'Pendente',closed:'Encerrada',on_hold:'Pausada'};
  const configs={
  vehicles:{headers:['Frota','Placa','Marca / Modelo','Secretaria','Ano','Situação'],cells:x=>[x.fleet_number,x.plate,[x.make,x.model].filter(Boolean).join(' '),secretariaLabels[x.secretaria_id]||x.secretaria?.nome||x.secretaria?.sigla||'Secretaria não identificada',x.model_year,statusNames[String(x.status||'').toLowerCase()]||x.status]},
  secretarias:{headers:['Sigla','Secretaria','Responsável','Centro de custo','Situação'],cells:x=>[x.sigla,x.nome,x.responsavel_nome,x.centro_custo,x.status]},
