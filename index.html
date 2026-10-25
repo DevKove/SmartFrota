@@ -1076,11 +1076,11 @@ function requestLoadingTarget(path,method){
  const verb=String(method||'GET').toUpperCase(),urlPath=String(path||'').split('?')[0];
  if(urlPath.includes('/auth/'))return null;
  if(urlPath.includes('/dashboard/summary'))return $('dashboardMetrics')||$('connectionMessage');
+ if(verb!=='GET'&&$('formPanel')&&!$('formPanel').classList.contains('hidden'))return $('formPanel');
  if(urlPath.includes('/work_orders'))return state.page==='dashboard'?$('recentWorkOrders'):state.page==='work_orders'?$('listContent'):null;
  if(state.page==='audit')return $('auditResults')||$('auditTable')||null;
  const match=urlPath.match(/\/v1\/([^/]+)/);
  if(match&&match[1]===state.page)return $('listContent')||$('formPanel')||null;
- if(verb!=='GET'&&$('formPanel')&&!$('formPanel').classList.contains('hidden'))return $('formPanel');
  return null;
 }
 function beginApiLoading(path,method){
