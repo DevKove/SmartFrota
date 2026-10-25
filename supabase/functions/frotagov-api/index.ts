@@ -438,7 +438,13 @@ Deno.serve(async (req: Request) => {
       }
       if (key !== "secretarias" && !payload.secretaria_id) return fail(400, "secretaria_required", "Vincule este registro a uma secretaria.");
       if (!profile.isAdmin && (!payload.secretaria_id || !profile.secretaria_ids.includes(String(payload.secretaria_id)))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
-      payload.created_by = profile.id;
+      // work_orders uses requested_by (required) instead of a created_by column.
+      if (key === "work_orders") {
+        payload.requested_by = profile.id;
+        delete payload.created_by;
+      } else {
+        payload.created_by = profile.id;
+      }
       if (key === "vehicles" || key === "secretarias" || key === "drivers") payload.version = 1;
       if (key === "vehicles" || key === "secretarias") payload.updated_by = profile.id;
       const { data, error } = await admin.from(cfg.table).insert(payload).select("*").single();
