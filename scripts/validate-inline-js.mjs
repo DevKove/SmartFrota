@@ -121,6 +121,20 @@ if (!html.includes("['low','Baixa']") ||
   throw new Error('O formulário de O.S. deve usar valores de prioridade e status aceitos pelo banco, com rótulos em português.');
 }
 for (const required of [
+  "['active','Ativo'],['inactive','Inativo'],['blocked','Bloqueado']",
+  "['unit_price','Preço por litro (R$)','number',true]",
+  "['approved','Aprovada'],['attention','Requer atenção'],['blocked','Bloqueada']",
+  "['open','Aberta'],['investigating','Em apuração'],['resolved','Resolvida'],['closed','Encerrada']",
+  "['supplier_id','Fornecedor','select',true,'suppliers']",
+  "['initial_amount','Valor inicial (R$)','number',true]",
+  "body.result=critical?'blocked':issues.length?'attention':'approved';",
+]) {
+  if (!html.includes(required)) throw new Error('Formulário desalinhado com o banco: ' + required);
+}
+if (!api.includes('payload.idempotency_key = crypto.randomUUID();')) {
+  throw new Error('O cadastro de abastecimento deve gerar a chave de idempotência exigida pelo banco.');
+}
+for (const required of [
   'financial_transactions: { table:',
   'inventory_movements: { table:',
   'vehicle_documents: { table:',
