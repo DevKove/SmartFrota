@@ -30,4 +30,23 @@ if (corsResponse.status !== 403 || corsBody?.error?.code !== "origin_not_allowed
   throw new Error(`A API não rejeitou uma origem web não autorizada: HTTP ${corsResponse.status}; código ${corsBody?.error?.code ?? "indisponível"}.`);
 }
 
-console.log("Smoke test aprovado: rotas protegidas exigem sessão e origens web não autorizadas são rejeitadas.");
+
+const preflightResponse = await fetch(apiBase + "/v1/vehicles", {
+  method: "OPTIONS",
+  headers: {
+    Origin: "https://devkove.github.io",
+    "Access-Control-Request-Method": "GET",
+    "Access-Control-Request-Headers": "authorization, apikey, content-type",
+  },
+  ...timeout,
+});
+const allowOrigin = preflightResponse.headers.get("access-control-allow-origin");
+const allowMethods = preflightResponse.headers.get("access-control-allow-methods") ?? "";
+const allowHeaders = preflightResponse.headers.get("access-control-allow-headers") ?? "";
+if (!preflightResponse.ok || allowOrigin !== "https://devkove.github.io" ||
+    !allowMethods.includes("GET") || !allowHeaders.toLowerCase().includes("authorization") ||
+    !allowHeaders.toLowerCase().includes("apikey")) {
+  throw new Error(`Preflight CORS inválido: HTTP ${preflightResponse.status}; origem ${allowOrigin ?? "ausente"}.`);
+}
+
+console.log("Smoke test aprovado: sessão obrigatória, CORS permitido para o Pages e origens não autorizadas bloqueadas.");
