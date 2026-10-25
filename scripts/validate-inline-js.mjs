@@ -38,8 +38,10 @@ try {
 if (!worker.includes("const CACHE_VERSION = 'v27';") || !worker.includes("icons/logo-192.png?v=9") || !worker.includes("icons/logo-512.png?v=9")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
-if (/minlength="10"|password\.length<10|newPassword\.length<10|pelo menos 10 caracteres|mín\. 10 caracteres/.test(html)) {
-  throw new Error('Validação de senha do frontend está abaixo da política de 14 caracteres da API.');
+if (!html.includes('minlength="10"') ||
+    (!html.includes('password.length<10') && !html.includes('password.length < 10')) ||
+    html.includes('minlength="14"') || html.includes('password.length < 14') || html.includes('14 caracteres')) {
+  throw new Error('Validação de senha do frontend deve exigir 10 caracteres, alinhada à API.');
 }
 if (html.includes("fields.unshift(['responsavel_nome','Responsável pelo cadastro'")) {
   throw new Error('Formulários operacionais exibem um campo de responsável que a API não persiste.');
