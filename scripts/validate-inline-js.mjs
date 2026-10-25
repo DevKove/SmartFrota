@@ -116,6 +116,9 @@ for (const required of [
   'function inScope(profile: Profile, record: any, resourceKey?: string)',
   'if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id)',
   'inScope(profile, current, key)',
+  'const effectiveVehicleId = Object.prototype.hasOwnProperty.call(payload, "vehicle_id")',
+  'const effectiveSecretariaId = Object.prototype.hasOwnProperty.call(payload, "secretaria_id")',
+  'if (String(vehicle.secretaria_id) !== String(effectiveSecretariaId)) return fail(400, "secretaria_vehicle_mismatch", "A secretaria do registro deve ser a mesma do veículo.");'
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
