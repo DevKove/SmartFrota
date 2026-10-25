@@ -170,6 +170,14 @@ Deno.serve(async (req: Request) => {
   const rawPath = marker >= 0 ? url.pathname.slice(marker) : url.pathname.replace(/^\/functions\/v1\/frotagov-api(?=\/|$)/, "");
   const path = rawPath.replace(/\/+$/, "") || "/";
   try {
+    // Global per-IP ceiling across all API routes: limits endpoint abuse before parsing bodies or querying business data.
+    // Supabase/Cloudflare supplies cf-connecting-ip; never trust arbitrary X-Forwarded-For values.
+    const clientIp = req.headers.get("cf-connecting-ip")?.trim();
+    if (clientIp) {
+      const globalLimit = await consumeRateLimit("global:ip:" + clientIp, 300, 60);
+      if (globalLimit === "limited") return fail(429, "global_rate_limit_exceeded", "Muitas solicitações. Aguarde um minuto antes de tentar novamente.");
+      if (globalLimit === "unavailable") return fail(503, "security_check_unavailable", "A proteção temporária não está disponível. Tente novamente em instantes.");
+    }
     if (await bodyTooLarge(req)) return fail(413, "request_too_large", "A solicitação excede o limite permitido.");
     if (path === "/v1/auth/register" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
