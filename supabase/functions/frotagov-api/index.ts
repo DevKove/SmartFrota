@@ -171,7 +171,7 @@ Deno.serve(async (req: Request) => {
   const path = rawPath.replace(/\/+$/, "") || "/";
   try {
     // Global per-IP ceiling across all API routes: limits endpoint abuse before parsing bodies or querying business data.
-    // Supabase/Cloudflare supplies cf-connecting-ip; never trust arbitrary X-Forwarded-For values.
+    // Use only the platform-provided client IP; never trust arbitrary forwarded-for values.
     const clientIp = req.headers.get("cf-connecting-ip")?.trim();
     if (clientIp) {
       const globalLimit = await consumeRateLimit("global:ip:" + clientIp, 300, 60);
