@@ -39,8 +39,8 @@ if (!worker.includes("const CACHE_VERSION = 'v27';") || !worker.includes("icons/
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (!html.includes('minlength="10"') ||
-    !/password\\.length<10|password\\.length < 10/.test(html) ||
-    /minlength="14"|password\\.length<14|14 caracteres/.test(html)) {
+    !/password[.]length<10|password[.]length < 10/.test(html) ||
+    /minlength="14"|password[.]length<14|14 caracteres/.test(html)) {
   throw new Error('Validação de senha do frontend deve exigir 10 caracteres, alinhada à API.');
 }
 if (html.includes("fields.unshift(['responsavel_nome','Responsável pelo cadastro'")) {
