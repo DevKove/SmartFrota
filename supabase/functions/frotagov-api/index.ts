@@ -257,7 +257,10 @@ Deno.serve(async (req: Request) => {
       const { data: verified, error: verifyError } = await verifyClient.auth.signInWithPassword({ email: profile.email, password: current });
       if (verifyError || !verified.session) return fail(400, "current_password_invalid", "A senha atual está incorreta.");
       const { error } = await verifyClient.auth.updateUser({ password: next });
-      if (error) return fail(400, "password_update_failed", error.message);
+      if (error) {
+        console.error("password update failed", { code: error.code });
+        return fail(400, "password_update_failed", "Não foi possível atualizar a senha. Confira os requisitos e tente novamente.");
+      }
       await admin.from("users").update({ must_change_password: false, updated_at: new Date().toISOString() }).eq("id", profile.id);
       return new Response(null, { status: 204, headers: cors });
     }
@@ -439,7 +442,10 @@ Deno.serve(async (req: Request) => {
       if (key === "vehicles" || key === "secretarias" || key === "drivers") payload.version = 1;
       if (key === "vehicles" || key === "secretarias") payload.updated_by = profile.id;
       const { data, error } = await admin.from(cfg.table).insert(payload).select("*").single();
-      if (error) return fail(400, "validation_error", error.message);
+      if (error) {
+        console.error("resource create failed", { resource: key, code: error.code });
+        return fail(400, "validation_error", "Não foi possível salvar o registro. Confira os campos obrigatórios e os vínculos selecionados.");
+      }
       return json({ data }, 201);
     }
     if (id && method === "PATCH") {
@@ -470,7 +476,10 @@ Deno.serve(async (req: Request) => {
       if (current.version !== undefined) payload.version = current.version + 1;
       if (key === "vehicles" || key === "secretarias") payload.updated_by = profile.id;
       const { data, error } = await admin.from(cfg.table).update(payload).eq("id", id).select("*").single();
-      if (error) return fail(400, "validation_error", error.message);
+      if (error) {
+        console.error("resource update failed", { resource: key, code: error.code });
+        return fail(400, "validation_error", "Não foi possível atualizar o registro. Confira os campos obrigatórios e os vínculos selecionados.");
+      }
       return json({ data });
     }
     if (id && method === "DELETE") {
@@ -480,7 +489,10 @@ Deno.serve(async (req: Request) => {
       const version = Number(url.searchParams.get("version"));
       if (Number.isFinite(version) && current.version !== undefined && version !== current.version) return fail(409, "version_conflict", "O registro foi alterado por outra sessão. Atualize e tente novamente.");
       const { error } = await admin.from(cfg.table).update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...(current.version !== undefined ? { version: current.version + 1 } : {}) }).eq("id", id);
-      if (error) return fail(400, "delete_failed", error.message);
+      if (error) {
+        console.error("resource delete failed", { resource: key, code: error.code });
+        return fail(400, "delete_failed", "Não foi possível excluir o registro. Verifique se ele possui vínculos com outros dados.");
+      }
       return new Response(null, { status: 204, headers: cors });
     }
     return fail(404, "not_found", "Rota não encontrada.");
