@@ -30,11 +30,19 @@ if (!SUPABASE_URL || !SERVICE || !ANON) {
   });
 }
 const admin = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });
+const ALLOWED_ORIGIN = "https://devkove.github.io";
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, idempotency-key",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
 };
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
 const fail = (status: number, code: string, message: string) => json({ error: { code, message } }, status);
@@ -70,7 +78,8 @@ async function getProfile(token: string): Promise<Profile | null> {
   if (permissionError) { console.error("user menu permissions query failed", { code: permissionError.code }); return null; }
   const roles = (roleRows ?? []).map((x: any) => x.roles?.code).filter(Boolean);
   const permissions = (permissionRows ?? []).map((x: any) => x.permission_code).filter(Boolean);
-  const isAdmin = user.email.toLowerCase() === (Deno.env.get("SMARTFROTA_ADMIN_EMAIL") ?? "koveirovitor@gmail.com").trim().toLowerCase();
+  // Administrative authority comes from the server-controlled role table, never from an email address or user-editable metadata.
+  const isAdmin = roles.includes("system_admin");
   return { id, email: user.email, display_name: user.display_name, is_active: user.is_active, must_change_password: user.must_change_password, roles, permissions, secretaria_ids: (scopeRows ?? []).map((x: any) => x.secretaria_id), isAdmin };
 }
 const MENU_PERMISSION_CODES = new Set([...["vehicles","secretarias","drivers","suppliers","work_orders","maintenance","fuel","inspections","incidents","inventory","contracts","finance","reports","users"].flatMap(module => ["read","create","update","delete"].map(action => module + ":" + action))]);
@@ -99,22 +108,80 @@ function cleanFields(body: Record<string, unknown>, fields: string[]) {
   for (const key of fields) if (Object.prototype.hasOwnProperty.call(body, key)) out[key] = body[key];
   return out;
 }
+
+const MAX_BODY_BYTES = 256 * 1024;
+async function bodyTooLarge(req: Request): Promise<boolean> {
+  if (!["POST", "PATCH", "PUT"].includes(req.method) || !req.body) return false;
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return true;
+  const reader = req.clone().body!.getReader();
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return false;
+      size += value.byteLength;
+      if (size > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return true;
+      }
+    }
+  } finally {
+    try { reader.releaseLock(); } catch { /* reader may already be released */ }
+  }
+}
+async function hashRateKey(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+}
+type RateLimitResult = "ok" | "limited" | "unavailable";
+async function consumeRateLimit(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult> {
+  const bucket = await hashRateKey(key);
+  const { data, error } = await admin.rpc("consume_api_rate_limit", {
+    p_bucket_key: bucket, p_limit: limit, p_window_seconds: windowSeconds
+  });
+  if (error) {
+    console.error("rate limit check unavailable", { code: error.code });
+    return "unavailable";
+  }
+  return data === true ? "ok" : "limited";
+}
+async function authRateLimit(req: Request, route: string, email: string, ipLimit: number, emailLimit: number, windowSeconds: number): Promise<RateLimitResult> {
+  // Prefer the platform-provided client IP; do not trust arbitrary forwarded-for values.
+  const ip = req.headers.get("cf-connecting-ip")?.trim();
+  if (ip) {
+    const ipResult = await consumeRateLimit(route + ":ip:" + ip, ipLimit, windowSeconds);
+    if (ipResult !== "ok") return ipResult;
+  }
+  return await consumeRateLimit(route + ":email:" + email.toLowerCase(), emailLimit, windowSeconds);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const url = new URL(req.url);
+  const origin = req.headers.get("origin");
+  if (origin && origin !== ALLOWED_ORIGIN) {
+    return fail(403, "origin_not_allowed", "Origem não autorizada.");
+  }
   // A URL completa contém "/v1/" tanto no gateway quanto na rota da API.
   // Use a última ocorrência para identificar a rota real sem confundir os prefixos.
   const marker = url.pathname.lastIndexOf("/v1/");
   const rawPath = marker >= 0 ? url.pathname.slice(marker) : url.pathname.replace(/^\/functions\/v1\/frotagov-api(?=\/|$)/, "");
   const path = rawPath.replace(/\/+$/, "") || "/";
   try {
+    if (await bodyTooLarge(req)) return fail(413, "request_too_large", "A solicitação excede o limite permitido.");
     if (path === "/v1/auth/register" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
+      const emailForLimit = String(body.email ?? "").trim().toLowerCase();
+      const registerLimit = await authRateLimit(req, "register", emailForLimit, 10, 3, 60 * 60);
+      if (registerLimit === "limited") return fail(429, "too_many_requests", "Muitas tentativas de cadastro. Aguarde antes de tentar novamente.");
+      if (registerLimit === "unavailable") return fail(503, "security_check_unavailable", "Não foi possível validar a proteção da solicitação. Tente novamente em instantes.");
       const display_name = String(body.display_name ?? "").trim();
       const email = String(body.email ?? "").trim().toLowerCase();
       const password = String(body.password ?? "");
-      if (display_name.length < 2 || display_name.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 14 || password.length > 1024) {
-        return fail(400, "validation_error", "Informe nome, e-mail válido e senha com pelo menos 14 caracteres.");
+      if (display_name.length < 2 || display_name.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 10 || password.length > 1024) {
+        return fail(400, "validation_error", "Informe nome, e-mail válido e senha com pelo menos 10 caracteres.");
       }
       const { data: created, error: createError } = await admin.auth.admin.createUser({
         email, password, email_confirm: true, user_metadata: { display_name }
@@ -142,6 +209,9 @@ Deno.serve(async (req: Request) => {
     if (path === "/v1/auth/login" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const email = String(body.email ?? "").trim().toLowerCase();
+      const loginLimit = await authRateLimit(req, "login", email, 30, 8, 15 * 60);
+      if (loginLimit === "limited") return fail(429, "too_many_requests", "Muitas tentativas de acesso. Aguarde antes de tentar novamente.");
+      if (loginLimit === "unavailable") return fail(503, "security_check_unavailable", "Não foi possível validar a proteção da solicitação. Tente novamente em instantes.");
       const password = String(body.password ?? "");
       if (!email || !password || email.length > 254 || password.length > 1024) return fail(400, "validation_error", "Informe e-mail e senha válidos.");
       const client = createClient(SUPABASE_URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -174,7 +244,7 @@ Deno.serve(async (req: Request) => {
     if (path === "/v1/auth/change-password" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const current = String(body.current_password ?? ""), next = String(body.new_password ?? "");
-      if (next.length < 14 || next.length > 1024 || next === current) return fail(400, "validation_error", "A nova senha deve ter pelo menos 14 caracteres e ser diferente da atual.");
+      if (next.length < 10 || next.length > 1024 || next === current) return fail(400, "validation_error", "A nova senha deve ter pelo menos 10 caracteres e ser diferente da atual.");
       const verifyClient = createClient(SUPABASE_URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
       const { data: verified, error: verifyError } = await verifyClient.auth.signInWithPassword({ email: profile.email, password: current });
       if (verifyError || !verified.session) return fail(400, "current_password_invalid", "A senha atual está incorreta.");
@@ -233,7 +303,7 @@ Deno.serve(async (req: Request) => {
         const email = String(b.email ?? "").trim().toLowerCase(), display_name = String(b.display_name ?? "").trim(), temporary_password = String(b.temporary_password ?? "");
         const permission_codes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x: unknown) => String(x)))] : [];
         const secretaria_ids = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x: unknown) => String(x)))] : [];
-        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 14 || !permission_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 14 caracteres ou mais e pelo menos uma permissão.");
+        if (!email.includes("@") || display_name.length < 2 || temporary_password.length < 10 || !permission_codes.length) return fail(400, "validation_error", "Informe e-mail, nome, senha temporária com 10 caracteres ou mais e pelo menos uma permissão.");
         if (permission_codes.some((code: string) => !MENU_PERMISSION_CODES.has(code))) return fail(400, "invalid_permission", "Uma ou mais permissões selecionadas são inválidas.");
         if (!profile.isAdmin && secretaria_ids.some((x: string) => !profile.secretaria_ids.includes(x))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
         const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password: temporary_password, email_confirm: true, user_metadata: { display_name } });
@@ -265,7 +335,7 @@ Deno.serve(async (req: Request) => {
           changes.email = email;
         }
         const password = Object.prototype.hasOwnProperty.call(b,"temporary_password") ? String(b.temporary_password ?? "") : "";
-        if (password && password.length < 14) return fail(400,"validation_error","A senha temporária deve ter ao menos 14 caracteres.");
+        if (password && password.length < 10) return fail(400,"validation_error","A senha temporária deve ter ao menos 10 caracteres.");
         if (typeof b.is_active === "boolean") changes.is_active = b.is_active;
         const permissionCodes = Array.isArray(b.permission_codes) ? [...new Set(b.permission_codes.map((x:unknown)=>String(x)))] : null;
         const secretariaIds = Array.isArray(b.secretaria_ids) ? [...new Set(b.secretaria_ids.map((x:unknown)=>String(x)))] : null;
