@@ -101,6 +101,9 @@ for (const required of [
 if (/style=["'][^"']*display:block!important;visibility:visible!important/.test(html)) {
   throw new Error('Foi encontrado estilo que força item do menu a ficar visível para todos os perfis.');
 }
+if (/return fail\([^;]*error\.message/.test(api)) {
+  throw new Error('A API não deve expor mensagens internas do banco ou do provedor de autenticação aos usuários.');
+}
 for (const required of [
   'financial_transactions: { table:',
   'inventory_movements: { table:',
@@ -117,6 +120,8 @@ for (const required of [
   'function inScope(profile: Profile, record: any, resourceKey?: string)',
   'if (resourceKey === "secretarias") return Boolean(record?.id) && profile.secretaria_ids.includes(record.id)',
   'inScope(profile, current, key)',
+  'Não foi possível salvar o registro. Confira os campos obrigatórios e os vínculos selecionados.',
+  'Não foi possível atualizar o registro. Confira os campos obrigatórios e os vínculos selecionados.',
   'const effectiveVehicleId = Object.prototype.hasOwnProperty.call(payload, "vehicle_id")',
   'const effectiveSecretariaId = Object.prototype.hasOwnProperty.call(payload, "secretaria_id")',
   'if (String(vehicle.secretaria_id) !== String(effectiveSecretariaId)) return fail(400, "secretaria_vehicle_mismatch", "A secretaria do registro deve ser a mesma do veículo.");'
