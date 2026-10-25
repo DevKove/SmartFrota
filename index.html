@@ -1161,6 +1161,18 @@ function isRecordCreator(record){
  return candidates.some(id=>id!==null&&id!==undefined&&current.includes(String(id).trim().toLowerCase()));
 }
 function canEditRecord(record){return isSystemAdmin()||isRecordCreator(record);}
+function formatActorValue(value){
+ const raw=String(value??'').trim();
+ if(!raw)return '';
+ const profileUser=state.profile?.user||{};
+ const currentName=String(profileUser.display_name||state.user?.display_name||state.profile?.display_name||'').trim();
+ const currentEmail=String(profileUser.email||state.user?.email||state.profile?.email||'').trim();
+ const currentIds=[state.user?.id,state.profile?.user_id,state.profile?.id,profileUser.id].filter(Boolean).map(v=>String(v).trim().toLowerCase());
+ const lower=raw.toLowerCase();
+ if(currentName&&currentIds.includes(lower))return currentName;
+ if(currentEmail&&lower===currentEmail.toLowerCase())return currentEmail;
+ return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)?'Usuário não identificado':raw;
+}
 function canPerform(moduleKey,action){
  const map={vehicles:'vehicles',secretarias:'secretarias',drivers:'drivers',suppliers:'suppliers',work_orders:'work_orders',maintenance_plans:'maintenance',fuel_records:'fuel',inspections:'inspections',incidents:'incidents',inventory_products:'inventory',contracts:'contracts',budget_sheets:'finance',reports:'reports'};
  return isSystemAdmin()||Boolean(state.profile?.permissions?.includes((map[moduleKey]||moduleKey)+':'+action));
@@ -1386,13 +1398,14 @@ async function renderList(key){
  }
  function secretariaDetails(item){
   const visual=secretariaVisual(item),admin=canPerform('secretarias','update');
-  const labels={id:'Identificador',nome:'Nome da secretaria',sigla:'Sigla',status:'Situação',responsavel_nome:'Responsável',responsavel_cargo:'Cargo do responsável',telefone_institucional:'Telefone institucional',email_institucional:'E-mail institucional',centro_custo:'Centro de custo',codigo_orcamentario:'Código orçamentário',descricao:'Descrição',created_at:'Data de cadastro',updated_at:'Última atualização',secretaria_id:'Secretaria vinculada'};
-  const fields=Object.entries(item).filter(([k,v])=>v!==null&&v!==undefined&&v!=='').map(([k,v])=>{
+  const labels={nome:'Nome da secretaria',sigla:'Sigla',status:'Situação',responsavel_nome:'Responsável',responsavel_cargo:'Cargo do responsável',telefone_institucional:'Telefone institucional',email_institucional:'E-mail institucional',centro_custo:'Centro de custo',codigo_orcamentario:'Código orçamentário',descricao:'Descrição',created_at:'Data de cadastro',updated_at:'Última atualização',updated_by:'Alterado por',approved_by:'Aprovado por'};
+  const hidden=new Set(['id','secretaria_id','created_by','created_by_user_id','created_by_profile_id','user_id','requested_by','creator_id','created_by_id','owner_id','inserted_by','created_user_id','responsible_user_id','deleted_at','photo_storage_key','license_photo_storage_key']);
+  const fields=Object.entries(item).filter(([k,v])=>!hidden.has(k)&&!k.endsWith('_id')&&labels[k]&&v!==null&&v!==undefined&&v!=='').map(([k,v])=>{
    let value=v;
    if(typeof v==='object')value=JSON.stringify(v,null,2);
    if(/_at$/.test(k)){const d=new Date(v);if(!Number.isNaN(d.getTime()))value=d.toLocaleString('pt-BR')}
-   const label=labels[k]||k.replace(/_/g,' ').replace(/(^| )([a-z])/g,(m,a,b)=>a+b.toUpperCase());
-   return '<div class="secretaria-detail-field"><small>'+escapeHtml(label)+'</small><div>'+escapeHtml(String(value))+'</div></div>';
+   if(/(^|_)(by|user|user_id)$/.test(k)||['created_by','updated_by','approved_by','reviewed_by','deleted_by','modified_by','inserted_by'].includes(k))value=formatActorValue(v);
+   return '<div class="secretaria-detail-field"><small>'+escapeHtml(labels[k])+'</small><div>'+escapeHtml(String(value))+'</div></div>';
   }).join('');
   $('listContent').innerHTML='<article class="secretaria-detail" style="--dept:'+visual.color+'"><header class="secretaria-detail-head"><div class="secretaria-detail-icon" aria-hidden="true">'+visual.icon+'</div><div><h2>'+escapeHtml(item.nome||'Secretaria')+'</h2><p>'+escapeHtml(item.sigla||'Sem sigla')+' · '+escapeHtml(item.status||'Situação não informada')+'</p></div></header><div class="secretaria-detail-grid">'+fields+'</div><div class="secretaria-detail-actions"><button type="button" class="secondary secretaria-back">← Voltar às secretarias</button>'+(admin?'<button type="button" class="secretaria-edit" data-id="'+escapeHtml(item.id)+'">Editar secretaria</button>':'')+'</div></article>';
  }
@@ -1422,17 +1435,7 @@ async function renderList(key){
   const statusNames={active:'Ativo',inactive:'Inativo',available:'Disponível',maintenance:'Em manutenção',retired:'Baixado',blocked:'Bloqueado',suspended:'Suspenso',requested:'Solicitada',awaiting_approval:'Aguardando aprovação',approved:'Aprovada',in_progress:'Em andamento',waiting_parts:'Aguardando peças',completed:'Concluída',rejected:'Rejeitada',cancelled:'Cancelada',canceled:'Cancelada',open:'Aberta',opened:'Aberta',pending:'Pendente',closed:'Encerrada',on_hold:'Pausada',investigating:'Em apuração',resolved:'Resolvida',attention:'Requer atenção',draft:'Rascunho',expired:'Expirado',terminated:'Encerrado',low:'Baixa',normal:'Normal',medium:'Média',high:'Alta',urgent:'Urgente',critical:'Crítica',true:'Sim',false:'Não'};
   const entries=Object.entries(item||{}).filter(([k,v])=>!hidden.has(k)&&v!==null&&v!==undefined&&v!==''&&labelsForView[k]&&!k.endsWith('_id')).map(([k,v])=>{
    let value=v;
-   if(k==='updated_by'){
-    const raw=String(v).trim();
-    const profileUser=state.profile?.user||{};
-    const currentId=String(state.user?.id||'').trim().toLowerCase();
-    const profileId=String(state.profile?.user_id||state.profile?.id||profileUser.id||'').trim().toLowerCase();
-    const rawLower=raw.toLowerCase();
-    const currentName=String(profileUser.display_name||state.user?.display_name||state.profile?.display_name||'').trim();
-    const currentEmail=String(profileUser.email||state.user?.email||state.profile?.email||'').trim();
-    const looksLikeUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw);
-    value=(currentName&&(rawLower===currentId||rawLower===profileId))?currentName:(currentEmail&&(rawLower===currentEmail.toLowerCase()))?currentEmail:looksLikeUuid?'Usuário não identificado':raw;
-   }
+   if(/(^|_)(by|user|user_id)$/.test(k)||['created_by','updated_by','approved_by','reviewed_by','deleted_by','modified_by','inserted_by'].includes(k))value=formatActorValue(v);
    if(typeof v==='boolean')value=v?'Sim':'Não';
    else if(typeof v==='object')value=JSON.stringify(v);
    else if(/(^|_)(at|on|date)$/.test(k)){const d=new Date(v);if(!Number.isNaN(d.getTime()))value=d.toLocaleString('pt-BR')}
@@ -1634,7 +1637,7 @@ async function renderAudit(){
    return true;
   });
   $('auditCount').textContent=filtered.length+' de '+all.length+' registro(s) encontrados';
-  $('auditTable').innerHTML=filtered.length?table(Object.keys(filtered[0]).map(k=>labelsFor[k]||k.replace(/_/g,' ')),filtered.slice(0,100).map(x=>'<tr>'+Object.keys(filtered[0]).map(k=>'<td>'+escapeHtml(fmt(x[k]))+'</td>').join('')+'</tr>')):'<div class="empty">Nenhum registro corresponde aos filtros.</div>';
+  $('auditTable').innerHTML=filtered.length?table(Object.keys(filtered[0]).map(k=>labelsFor[k]||k.replace(/_/g,' ')),filtered.slice(0,100).map(x=>'<tr>'+Object.keys(filtered[0]).map(k=>'<td>'+escapeHtml((/(^|_)(by|user|user_id)$/.test(k)||['created_by','updated_by','approved_by','reviewed_by','deleted_by','modified_by','inserted_by'].includes(k))?formatActorValue(x[k]):fmt(x[k]))+'</td>').join('')+'</tr>')):'<div class="empty">Nenhum registro corresponde aos filtros.</div>';
   $('auditTableTitle').textContent='Pré-visualização do relatório ('+Math.min(filtered.length,100)+' linhas)';
  }
  async function refresh(){
