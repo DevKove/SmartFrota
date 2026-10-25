@@ -445,7 +445,11 @@ Deno.serve(async (req: Request) => {
       } else {
         payload.created_by = profile.id;
       }
-      if (key === "vehicles" || key === "secretarias" || key === "drivers") payload.version = 1;
+      // fuel_records requires an idempotency key with no database default.
+      if (key === "fuel_records" && !payload.idempotency_key) {
+        payload.idempotency_key = crypto.randomUUID();
+      }
+      if (key === "vehicles" || key === "secretarias" || key === "drivers" || key === "inspections") payload.version = 1;
       if (key === "vehicles" || key === "secretarias") payload.updated_by = profile.id;
       const { data, error } = await admin.from(cfg.table).insert(payload).select("*").single();
       if (error) {
