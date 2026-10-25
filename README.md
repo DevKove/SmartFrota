@@ -8,13 +8,13 @@
 **Controle, manutenção e transparência para uma frota pública mais eficiente.**
 
 <p>
-  <img alt="Status" src="https://img.shields.io/badge/status-em%20valida%C3%A7%C3%A3o-087FE8?style=for-the-badge&logo=github" />
+  <img alt="Versão" src="https://img.shields.io/badge/vers%C3%A3o-1.0.0-087FE8?style=for-the-badge&logo=github" />
   <img alt="Idioma" src="https://img.shields.io/badge/idioma-Portugu%C3%AAs%20(BR)-16A6E8?style=for-the-badge" />
   <img alt="Frontend" src="https://img.shields.io/badge/frontend-GitHub%20Pages-222222?style=for-the-badge&logo=githubpages" />
   <img alt="Backend" src="https://img.shields.io/badge/backend-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=082B57" />
 </p>
 
-[🌐 **Abrir sistema**](https://devkove.github.io/SmartFrota/) · [📦 **Repositório**](https://github.com/DevKove/SmartFrota) · [🧪 **Validações CI**](https://github.com/DevKove/SmartFrota/actions) · [🐛 **Relatar problema**](https://github.com/DevKove/SmartFrota/issues)
+[🌐 **Abrir sistema**](https://devkove.github.io/SmartFrota/) · [📦 **Repositório**](https://github.com/DevKove/SmartFrota) · [🏷️ **Releases**](https://github.com/DevKove/SmartFrota/releases) · [🧪 **Validações CI**](https://github.com/DevKove/SmartFrota/actions) · [🐛 **Relatar problema**](https://github.com/DevKove/SmartFrota/issues)
 
 ---
 
@@ -26,14 +26,14 @@ O **SmartFrota** é uma aplicação de gestão pública de veículos e dos proce
 
 > <span style="color:#087FE8"><strong>Objetivo:</strong></span> organizar informações operacionais, apoiar o controle de custos e facilitar decisões administrativas com rastreabilidade e permissões por perfil.
 
-## 🟢 Estado atual e validação
+## 📌 Versão atual: 1.0.0\n\nA versão exibida no rodapé do sistema é **1.0.0**. Esta marcação identifica a primeira versão documentada do produto; não significa, por si só, que todos os módulos estejam homologados em produção. Consulte as [notas de versão](https://github.com/DevKove/SmartFrota/releases) para acompanhar publicações e mudanças.\n\n### Destaques desta versão\n\n- Identidade visual SmartFrota e rodapé institucional nas telas de acesso e no sistema autenticado.\n- Identificação de versão no rodapé.\n- Frontend publicado pelo GitHub Pages e integração planejada/configurada com Supabase para autenticação, API e PostgreSQL.\n- Controles de autenticação por token e limitação global de requisições por IP na API.\n- Testes automatizados e smoke test disponíveis no repositório.\n\n## 🟢 Estado atual e validação
 
 | Verificação | Situação | O que significa |
 |---|---|---|
 | Validação automatizada do código | **Aprovada** | As verificações estáticas do projeto passaram no GitHub Actions. |
 | Smoke test da API | **Aprovado** | A API respondeu ao teste de acesso sem token com o erro esperado `401 missing_bearer_token`. |
 | Publicação do frontend | **Concluída** | O workflow do GitHub Pages terminou com sucesso. |
-| Função de API Supabase | **Versão 18 implantada** | A função `frotagov-api` está implantada no Supabase; o nome interno foi mantido para compatibilidade. |
+| Função de API Supabase | **Versão implantada no Supabase** | A função `frotagov-api` mantém o nome interno por compatibilidade; a aplicação é apresentada como SmartFrota. |\n| Proteção contra excesso de requisições | **Configurada** | Limite global por IP na API; isso reduz abuso, mas não representa imunidade total a DDoS. |
 | Login real e fluxos autenticados | **Pendente** | Ainda precisam ser testados com uma conta de teste autorizada. |
 | CRUD completo, isolamento por secretaria e uso offline | **Pendente** | Não são considerados aprovados até que sejam executados testes específicos. |
 
