@@ -644,6 +644,47 @@ th{color:#243f5a;background:#e5eef8}
 @media(prefers-reduced-motion:reduce){[data-request-loading="true"]:after{animation:none;border-top-color:#087fe8}}
 
 
+
+/* Rodapé do sistema autenticado: itens separados e responsivos */
+.app-legal-footer{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  column-gap:24px;
+  row-gap:10px;
+  padding:18px 24px;
+  margin-top:18px;
+  border-top:1px solid #dce8f5;
+  background:rgba(255,255,255,.78);
+  color:#455f78;
+  font-size:12px;
+  line-height:1.6;
+  text-align:center;
+}
+.app-legal-footer > span{
+  display:inline-block;
+  white-space:normal;
+}
+.app-legal-footer .system-version{
+  display:inline-block;
+  padding:3px 9px;
+  border:1px solid #c5d3e0;
+  border-radius:999px;
+  background:#f1f6fc;
+  color:#183b59;
+  font-weight:750;
+  white-space:nowrap;
+}
+@media(max-width:600px){
+  .app-legal-footer{
+    flex-direction:column;
+    gap:6px;
+    padding:16px 12px;
+    font-size:11px;
+  }
+}
+
 </style>
 
 <style id="smartfrota-glass-theme">
