@@ -450,11 +450,20 @@ Deno.serve(async (req: Request) => {
       if (b.expected_version !== undefined && Number(b.expected_version) !== current.version) return fail(409, "version_conflict", "O registro foi alterado por outra sessão. Atualize e tente novamente.");
       const payload = cleanFields(b, cfg.fields);
       if (!profile.isAdmin && payload.secretaria_id && !profile.secretaria_ids.includes(String(payload.secretaria_id))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
-      if (["work_orders","fuel_records","inspections","incidents","maintenance_plans"].includes(key) && payload.vehicle_id) {
-        const { data: vehicle, error: vehicleError } = await admin.from("vehicles").select("id,secretaria_id").eq("id", String(payload.vehicle_id)).is("deleted_at", null).maybeSingle();
-        if (vehicleError || !vehicle) return fail(400, "invalid_vehicle", "Selecione um veículo válido.");
-        if (String(vehicle.secretaria_id) !== String(current.secretaria_id)) return fail(400, "secretaria_vehicle_mismatch", "Não é possível vincular o registro a veículo de outra secretaria.");
-        payload.secretaria_id = vehicle.secretaria_id;
+      if (["work_orders","fuel_records","inspections","incidents","maintenance_plans"].includes(key)) {
+        // Validate the effective vehicle/secretaria pair, including partial updates that change only secretaria_id.
+        const effectiveVehicleId = Object.prototype.hasOwnProperty.call(payload, "vehicle_id")
+          ? payload.vehicle_id
+          : current.vehicle_id;
+        const effectiveSecretariaId = Object.prototype.hasOwnProperty.call(payload, "secretaria_id")
+          ? payload.secretaria_id
+          : current.secretaria_id;
+        if (effectiveVehicleId) {
+          const { data: vehicle, error: vehicleError } = await admin.from("vehicles").select("id,secretaria_id").eq("id", String(effectiveVehicleId)).is("deleted_at", null).maybeSingle();
+          if (vehicleError || !vehicle) return fail(400, "invalid_vehicle", "Selecione um veículo válido.");
+          if (String(vehicle.secretaria_id) !== String(effectiveSecretariaId)) return fail(400, "secretaria_vehicle_mismatch", "A secretaria do registro deve ser a mesma do veículo.");
+          payload.secretaria_id = vehicle.secretaria_id;
+        }
       }
       if (!profile.isAdmin && payload.secretaria_id && !profile.secretaria_ids.includes(String(payload.secretaria_id))) return fail(403, "forbidden_scope", "Secretaria fora do seu escopo.");
       payload.updated_at = new Date().toISOString();
