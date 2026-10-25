@@ -1208,7 +1208,7 @@ async function renderList(key){
   $('filterField').innerHTML='<option value="">Todos os campos</option>'+fields.map(f=>'<option value="'+escapeHtml(f)+'">'+escapeHtml(fieldLabels[f]||f.replace(/_/g,' '))+'</option>').join('');
   const statusFields=['status','active','result','priority','severity'].filter(f=>fields.includes(f));
   const statuses=[...new Set(allRows.flatMap(x=>statusFields.map(f=>val(x[f])).filter(Boolean)))].sort();
-  $('filterStatus').innerHTML='<option value="">Todas as situações</option>'+statuses.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join('');
+  $('filterStatus').innerHTML='<option value="">Todas as situações</option>'+statuses.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(key==='work_orders'?(workOrderStatusLabels[String(v).toLowerCase()]||priorityLabels[String(v).toLowerCase()]||v):v)+'</option>').join('');
   const ctx=$('filterContext');
   if(key==='secretarias'){
    ctx.innerHTML='<div class="filter-grid nested-filters"><label>Sigla<input id="ctxSigla" type="search" placeholder="Ex.: SMS"></label><label>Nome da secretaria<input id="ctxNome" type="search" placeholder="Nome ou parte do nome"></label><label>Responsável<input id="ctxResponsavel" type="search" placeholder="Nome do responsável"></label><label>Centro de custo<input id="ctxCentro" type="search" placeholder="Código do centro de custo"></label></div>';
@@ -1217,7 +1217,7 @@ async function renderList(key){
   }else if(key==='drivers'){
    ctx.innerHTML='<div class="filter-grid nested-filters"><label>Condutor<input id="ctxDriver" type="search" placeholder="Nome do condutor"></label><label>CPF<input id="ctxCpf" type="search" placeholder="CPF"></label><label>Matrícula<input id="ctxEmployee" type="search" placeholder="Matrícula funcional"></label><label>Telefone<input id="ctxPhone" type="search" placeholder="Telefone"></label></div>';
   }else if(key==='work_orders'){
-   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Número da ordem<input id="ctxOrder" type="search" placeholder="Nº da OS"></label><label>Veículo (ID/placa)<input id="ctxVehicle" type="search" placeholder="Veículo relacionado"></label><label>Prioridade<select id="ctxPriority"><option value="">Todas</option>'+[...new Set(allRows.map(x=>val(x.priority)).filter(Boolean))].sort().map(v=>'<option>'+escapeHtml(v)+'</option>').join('')+'</select></label><label>Custo mínimo<input id="ctxMinCost" type="number" min="0" step=".01" placeholder="R$"></label><label>Custo máximo<input id="ctxMaxCost" type="number" min="0" step=".01" placeholder="R$"></label></div>';
+   ctx.innerHTML='<div class="filter-grid nested-filters"><label>Número da ordem<input id="ctxOrder" type="search" placeholder="Nº da OS"></label><label>Veículo (ID/placa)<input id="ctxVehicle" type="search" placeholder="Veículo relacionado"></label><label>Prioridade<select id="ctxPriority"><option value="">Todas</option>'+[...new Set(allRows.map(x=>val(x.priority)).filter(Boolean))].sort().map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(priorityLabels[String(v).toLowerCase()]||v)+'</option>').join('')+'</select></label><label>Custo mínimo<input id="ctxMinCost" type="number" min="0" step=".01" placeholder="R$"></label><label>Custo máximo<input id="ctxMaxCost" type="number" min="0" step=".01" placeholder="R$"></label></div>';
   }else ctx.innerHTML='';
  }
  function matches(x){
