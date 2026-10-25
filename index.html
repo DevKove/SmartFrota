@@ -636,17 +636,13 @@ th{color:#243f5a;background:#e5eef8}
 .sidebar .nav a.nav-external:hover,.sidebar .nav a.nav-external:focus-visible{background:linear-gradient(90deg,#087fe8,#0785fa);border-color:#4caeff44;color:#fff!important;outline:none;box-shadow:0 4px 12px #0069c84a}
 .sidebar .nav a.nav-external .nav-external-arrow{margin-left:auto;font-size:15px;opacity:.8}
  
-#appRequestLoader{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:rgba(4,24,49,.24);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:1;visibility:visible;transition:opacity .18s ease,visibility .18s ease}
-#appRequestLoader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
-#appRequestLoader .request-card{display:flex;align-items:center;gap:15px;min-width:min(310px,90vw);max-width:90vw;padding:20px 24px;border:1px solid #dce8f5;border-radius:18px;background:#fff;color:#16365d;box-shadow:0 18px 55px #06264b30}
-#appRequestLoader .request-spinner{flex:0 0 auto;width:38px;height:38px;border:4px solid #d9eaff;border-top-color:#087fe8;border-right-color:#16a6e8;border-radius:50%;animation:smartfrota-request-spin .75s linear infinite}
-#appRequestLoader .request-title{font-size:15px;font-weight:800;line-height:1.35}
-#appRequestLoader .request-subtitle{margin-top:4px;color:#637b98;font-size:12px}
-#appRequestLoader .request-track{height:3px;margin-top:10px;overflow:hidden;border-radius:99px;background:#e5effb}
-#appRequestLoader .request-track:after{content:"";display:block;width:38%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#087fe8,#16a6e8);animation:smartfrota-request-progress 1.1s ease-in-out infinite}
+/* Carregamento contextual: o indicador aparece apenas no painel que recebe os dados. */
+[data-request-loading="true"]{position:relative!important;min-height:44px}
+[data-request-loading="true"]:after{content:"";position:absolute;top:12px;right:12px;width:19px;height:19px;border:3px solid #d9eaff;border-top-color:#087fe8;border-right-color:#16a6e8;border-radius:50%;animation:smartfrota-request-spin .75s linear infinite;pointer-events:none;z-index:2}
+[data-request-loading="true"]:before{content:"Atualizando…";position:absolute;top:10px;right:40px;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.94);color:#315577;font-size:11px;font-weight:700;pointer-events:none;z-index:2}
 @keyframes smartfrota-request-spin{to{transform:rotate(360deg)}}
-@keyframes smartfrota-request-progress{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
-@media(prefers-reduced-motion:reduce){#appRequestLoader,#appRequestLoader .request-spinner,#appRequestLoader .request-track:after{animation:none;transition:none}#appRequestLoader .request-track:after{width:100%}}
+@media(prefers-reduced-motion:reduce){[data-request-loading="true"]:after{animation:none;border-top-color:#087fe8}}
+
 
 </style>
 
@@ -919,10 +915,6 @@ window.addEventListener("beforeinstallprompt", function (event) {
 <div id="appBootLoader" role="status" aria-live="polite" aria-label="Carregando SmartFrota">
   <div class="boot-card"><div class="boot-spinner" aria-hidden="true"></div><div class="boot-title">SmartFrota</div><div class="boot-message">Restaurando sua sessão com segurança…</div><div class="boot-track" aria-hidden="true"></div></div>
 </div>
-<div id="appRequestLoader" class="is-hidden" role="status" aria-live="polite" aria-hidden="true">
-  <div class="request-card"><div class="request-spinner" aria-hidden="true"></div><div><div id="appRequestLoaderTitle" class="request-title">Processando sua solicitação…</div><div class="request-subtitle">Aguarde enquanto o SmartFrota atualiza as informações.</div><div class="request-track" aria-hidden="true"></div></div></div>
-</div>
-
 <section id="loginView" class="login-wrap">
   <div class="brand-panel"><div class="brand-mark"><img src="https://images.openai.com/static-rsc-4/foDYJd6eYdTmfIpyQ0NYY7MQIk79KDJyuCqqrg7PuvRLj6qP4O__vzH9bFuvjdPY49nZ8BKrFOXLwzGmgW3HljH6LVdONTISUonQ1ggqnbvl30qL_ntRVezcMEeZAnavIExnl3klAiRl8pEezK466totA4aoROyvzH2XokFT9f0?purpose=inline" alt="Logomarca SmartFrota: brasão com caminhão e seta de crescimento"></div><div class="brand-kicker" style="margin-top:30px">Gestão pública inteligente</div><h1>Smart<span style="color:#35b5ff">Frota</span></h1><p>Frota bem gerida, cidade mais forte. Mais controle, eficiência e transparência para a sua frota.</p><div class="brand-features"><span class="brand-feature">◈ Gestão de veículos</span><span class="brand-feature">⚙ Manutenção</span><span class="brand-feature">▤ Controle de custos</span><span class="brand-feature">✓ Segurança</span></div><p style="font-size:13px;color:#c2def5;margin-top:28px">Mais controle. Mais eficiência. Mais resultado para o serviço público.</p></div>
   <form id="loginForm" class="login-card"><div class="eyebrow">Bem-vindo de volta</div><h2>Acesse sua conta</h2><p class="muted">Entre com as credenciais fornecidas pelo administrador do sistema.</p>
@@ -1079,27 +1071,39 @@ const API='https://jyfphgnysvsrqdlbogoh.supabase.co/functions/v1/frotagov-api';
 const API_KEY='sb_publishable_qDsNk_l-rghFK6dZmWXg-Q_Zqh2HnMq';
 const $=id=>document.getElementById(id);
 const state={token:null,user:null,page:'dashboard',profile:null,online:navigator.onLine};
-let activeApiRequests=0,apiLoaderTimer=null;
+const activeRequestTargets=new Map();
+function requestLoadingTarget(path,method){
+ const verb=String(method||'GET').toUpperCase(),urlPath=String(path||'').split('?')[0];
+ if(urlPath.includes('/auth/'))return null;
+ if(urlPath.includes('/dashboard/summary'))return $('dashboardMetrics')||$('connectionMessage');
+ if(urlPath.includes('/work_orders'))return state.page==='dashboard'?$('recentWorkOrders'):state.page==='work_orders'?$('listContent'):null;
+ if(state.page==='audit')return $('auditResults')||$('auditTable')||null;
+ const match=urlPath.match(/\\/v1\\/([^/]+)/);
+ if(match&&match[1]===state.page)return $('listContent')||$('formPanel')||null;
+ if(verb!=='GET'&&$('formPanel')&&!$('formPanel').classList.contains('hidden'))return $('formPanel');
+ return null;
+}
 function beginApiLoading(path,method){
- const app=$('appView'),loader=$('appRequestLoader'),title=$('appRequestLoaderTitle');
- activeApiRequests++;
- const verb=String(method||'GET').toUpperCase();
- if(title)title.textContent=verb==='GET'?'Buscando e atualizando dados…':'Salvando alterações com segurança…';
- if(activeApiRequests===1){
-  if(apiLoaderTimer)clearTimeout(apiLoaderTimer);
-  apiLoaderTimer=window.setTimeout(()=>{
-   if(activeApiRequests>0&&app&&!app.classList.contains('hidden')&&loader){
-    loader.classList.remove('is-hidden');loader.setAttribute('aria-hidden','false');
-   }
-  },220);
+ const target=requestLoadingTarget(path,method);
+ if(!target)return ()=>{};
+ const key=target.id||target;
+ const current=activeRequestTargets.get(key)||{target,count:0,timer:null};
+ current.count++;
+ if(current.timer)clearTimeout(current.timer);
+ if(current.count===1){
+  current.timer=window.setTimeout(()=>{
+   if(current.count>0&&current.target.isConnected)current.target.setAttribute('data-request-loading','true');
+  },180);
  }
+ activeRequestTargets.set(key,current);
  let finished=false;
  return ()=>{
   if(finished)return;finished=true;
-  activeApiRequests=Math.max(0,activeApiRequests-1);
-  if(activeApiRequests===0){
-   if(apiLoaderTimer){clearTimeout(apiLoaderTimer);apiLoaderTimer=null;}
-   if(loader){loader.classList.add('is-hidden');loader.setAttribute('aria-hidden','true');}
+  current.count=Math.max(0,current.count-1);
+  if(current.count===0){
+   if(current.timer)clearTimeout(current.timer);
+   if(current.target.isConnected)current.target.removeAttribute('data-request-loading');
+   activeRequestTargets.delete(key);
   }
  };
 }
