@@ -108,6 +108,18 @@ if (/style=["'][^"']*display:block!important;visibility:visible!important/.test(
 if (/return fail\([^;]*error\.message/.test(api)) {
   throw new Error('A API não deve expor mensagens internas do banco ou do provedor de autenticação aos usuários.');
 }
+if (!api.includes('if (key === "work_orders") {') ||
+    !api.includes('payload.requested_by = profile.id;') ||
+    !api.includes('delete payload.created_by;')) {
+  throw new Error('A criação de O.S. deve definir o solicitante autenticado e não enviar created_by inexistente.');
+}
+if (!html.includes("['low','Baixa']") ||
+    !html.includes("['urgent','Urgente']") ||
+    !html.includes("['requested','Solicitada']") ||
+    !html.includes("['awaiting_approval','Aguardando aprovação']") ||
+    !html.includes("['waiting_parts','Aguardando peças']")) {
+  throw new Error('O formulário de O.S. deve usar valores de prioridade e status aceitos pelo banco, com rótulos em português.');
+}
 for (const required of [
   'financial_transactions: { table:',
   'inventory_movements: { table:',
