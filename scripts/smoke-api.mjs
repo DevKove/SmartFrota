@@ -1,15 +1,16 @@
 import { readFileSync } from "node:fs";
 
 const html = readFileSync("index.html", "utf8");
-const apiMatch = html.match(/const API='([^']+)';\\s*const API_KEY='([^']+)';/);
-if (!apiMatch) throw new Error("Não foi possível localizar a URL da API e a chave pública no frontend.");
+const apiMatch = html.match(/const API='([^']+)'/);
+const keyMatch = html.match(/const API_KEY='([^']+)'/);
+if (!apiMatch || !keyMatch) throw new Error("Não foi possível localizar a URL da API e a chave pública no frontend.");
 
-const [, apiBase, apiKey] = apiMatch;
-const base = apiBase.replace(/\\/+$/, "");
+const apiBase = apiMatch[1].replace(/\/$/, "");
+const apiKey = keyMatch[1];
 const headers = { apikey: apiKey };
 const timeout = { signal: AbortSignal.timeout(15000) };
 
-const protectedResponse = await fetch(base + "/v1/vehicles", {
+const protectedResponse = await fetch(apiBase + "/v1/vehicles", {
   method: "GET",
   headers,
   ...timeout,
@@ -19,7 +20,7 @@ if (protectedResponse.status !== 401 || protectedBody?.error?.code !== "missing_
   throw new Error(`A API não bloqueou a rota protegida sem sessão: HTTP ${protectedResponse.status}; código ${protectedBody?.error?.code ?? "indisponível"}.`);
 }
 
-const corsResponse = await fetch(base + "/v1/vehicles", {
+const corsResponse = await fetch(apiBase + "/v1/vehicles", {
   method: "GET",
   headers: { ...headers, Origin: "https://origin-nao-autorizada.example" },
   ...timeout,
