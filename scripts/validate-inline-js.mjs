@@ -19,8 +19,11 @@ if (pwaIcons.length !== 2 ||
     !pwaIcons.some(icon => icon.src === '/SmartFrota/icons/logo-512.png?v=9' && icon.sizes === '512x512' && icon.type === 'image/png')) {
   throw new Error('Manifest PWA deve declarar o logo.jpg oficial nos tamanhos 192x192 e 512x512.');
 }
-if (!html.includes('manifest.webmanifest?v=12') || !html.includes('icons/logo.jpg?v=9') || !html.includes('service-worker.js?v=27')) {
+if (!html.includes('manifest.webmanifest?v=12') || !html.includes('icons/logo.jpg?v=9') || !html.includes('service-worker.js?v=28')) {
   throw new Error('Referências de manifesto e favicon precisam apontar para os recursos atuais do SmartFrota.');
+}
+if (/src="https:\/\/images\.openai\.com\//.test(html)) {
+  throw new Error('A identidade visual não deve depender de uma imagem de logo hospedada fora do repositório.');
 }
 
 if (inlineScripts.length === 0) throw new Error('Nenhum script inline foi encontrado em index.html.');
@@ -39,7 +42,7 @@ try {
   throw new Error(`JavaScript inválido em service-worker.js: ${error.message}`);
 }
 
-if (!worker.includes("const CACHE_VERSION = 'v27';") || !worker.includes("icons/logo-192.png?v=9") || !worker.includes("icons/logo-512.png?v=9")) {
+if (!worker.includes("const CACHE_VERSION = 'v28';") || !worker.includes("icons/logo-192.png?v=9") || !worker.includes("icons/logo-512.png?v=9")) {
   throw new Error('A versão do cache PWA precisa ser atualizada após as mudanças recentes da interface.');
 }
 if (!html.includes('minlength="10"') ||
