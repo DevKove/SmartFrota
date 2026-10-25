@@ -4,6 +4,7 @@ const html = readFileSync('index.html', 'utf8');
 const worker = readFileSync('service-worker.js', 'utf8');
 const api = readFileSync('supabase/functions/frotagov-api/index.ts', 'utf8');
 const migration = readFileSync('supabase/migrations/20261023201201_align_api_resource_columns.sql', 'utf8');
+const workOrderMigration = readFileSync('supabase/migrations/20261025170500_generate_work_order_numbers.sql', 'utf8');
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((match) => match[1]);
 
 
