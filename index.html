@@ -1248,9 +1248,26 @@ async function renderList(key){
  function setupFilters(){
   const fields=[...new Set(allRows.flatMap(x=>Object.keys(x||{})))].sort();
   $('filterField').innerHTML='<option value="">Todos os campos</option>'+fields.map(f=>'<option value="'+escapeHtml(f)+'">'+escapeHtml(fieldLabels[f]||f.replace(/_/g,' '))+'</option>').join('');
-  const statusFields=['status','active','result','priority','severity'].filter(f=>fields.includes(f));
-  const statuses=[...new Set(allRows.flatMap(x=>statusFields.map(f=>val(x[f])).filter(Boolean)))].sort();
-  $('filterStatus').innerHTML='<option value="">Todas as situações</option>'+statuses.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(key==='work_orders'?(workOrderStatusLabels[String(v).toLowerCase()]||priorityLabels[String(v).toLowerCase()]||v):v)+'</option>').join('');
+  const statusFieldByModule={
+   vehicles:{field:'status',options:[['active','Ativo'],['available','Disponível'],['maintenance','Em manutenção'],['inactive','Inativo'],['retired','Baixado']]},
+   secretarias:{field:'status',options:[['ativa','Ativa'],['inativa','Inativa']]},
+   drivers:{field:'status',options:[['active','Ativo'],['inactive','Inativo'],['suspended','Suspenso']]},
+   suppliers:{field:'status',options:[['active','Ativo'],['inactive','Inativo'],['blocked','Bloqueado']]},
+   work_orders:{field:'status',options:[['requested','Solicitada'],['awaiting_approval','Aguardando aprovação'],['approved','Aprovada'],['in_progress','Em andamento'],['waiting_parts','Aguardando peças'],['completed','Concluída'],['rejected','Rejeitada'],['cancelled','Cancelada']]},
+   maintenance_plans:{field:'active',options:[['true','Ativo'],['false','Inativo']]},
+   inspections:{field:'result',options:[['approved','Aprovada'],['attention','Requer atenção'],['blocked','Bloqueada']]},
+   incidents:{field:'status',options:[['open','Aberta'],['investigating','Em apuração'],['resolved','Resolvida'],['closed','Encerrada']]},
+   inventory_products:{field:'active',options:[['true','Ativo'],['false','Inativo']]},
+   contracts:{field:'status',options:[['draft','Rascunho'],['active','Ativo'],['expired','Expirado'],['terminated','Encerrado']]},
+   budget_sheets:{field:'status',options:[['active','Ativa'],['closed','Encerrada'],['suspended','Suspensa']]}
+  };
+  const statusConfig=statusFieldByModule[key];
+  const statusFields=statusConfig?[statusConfig.field]:['status','active','result','priority','severity'].filter(f=>fields.includes(f));
+  const observed=[...new Set(allRows.flatMap(x=>statusFields.map(f=>val(x[f])).filter(Boolean)))];
+  const statusOptions=statusConfig?statusConfig.options.slice():observed.map(v=>[v,v]);
+  for(const v of observed){if(!statusOptions.some(([value])=>String(value)===v))statusOptions.push([v,v]);}
+  const statusLabel=v=>({true:'Ativo',false:'Inativo',ativa:'Ativa',inativa:'Inativa',low:'Baixa',normal:'Normal',medium:'Média',high:'Alta',urgent:'Urgente',critical:'Crítica',requested:'Solicitada',awaiting_approval:'Aguardando aprovação',approved:'Aprovada',in_progress:'Em andamento',waiting_parts:'Aguardando peças',completed:'Concluída',rejected:'Rejeitada',cancelled:'Cancelada',canceled:'Cancelada',open:'Aberta',opened:'Aberta',pending:'Pendente',closed:'Encerrada',on_hold:'Pausada',investigating:'Em apuração',resolved:'Resolvida',attention:'Requer atenção',blocked:'Bloqueada',draft:'Rascunho',expired:'Expirado',terminated:'Encerrado',active:'Ativo',inactive:'Inativo',available:'Disponível',maintenance:'Em manutenção',retired:'Baixado',suspended:'Suspenso'})[String(v).toLowerCase()]||v;
+  $('filterStatus').innerHTML='<option value="">Todas as situações</option>'+statusOptions.map(([v,label])=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(label||statusLabel(v))+'</option>').join('');
   const ctx=$('filterContext');
   if(key==='secretarias'){
    ctx.innerHTML='<div class="filter-grid nested-filters"><label>Sigla<input id="ctxSigla" type="search" placeholder="Ex.: SMS"></label><label>Nome da secretaria<input id="ctxNome" type="search" placeholder="Nome ou parte do nome"></label><label>Responsável<input id="ctxResponsavel" type="search" placeholder="Nome do responsável"></label><label>Centro de custo<input id="ctxCentro" type="search" placeholder="Código do centro de custo"></label></div>';
@@ -1266,7 +1283,7 @@ async function renderList(key){
   const search=norm($('filterSearch').value),field=$('filterField').value,value=norm($('filterValue').value),status=$('filterStatus').value;
   if(search&&!Object.values(x).some(v=>norm(v).includes(search)))return false;
   if(value&&!(field?norm(x[field]).includes(value):Object.values(x).some(v=>norm(v).includes(value))))return false;
-  if(status){const sf=['status','active','result','priority','severity'].find(f=>val(x[f])===status);if(!sf)return false}
+  if(status){const statusConfig=statusFieldByModule[key],statusFields=statusConfig?[statusConfig.field]:['status','active','result','priority','severity'];if(!statusFields.some(f=>val(x[f])===status))return false}
   const from=$('filterDateFrom').value,to=$('filterDateTo').value;
   if(from||to){const dates=Object.values(x).map(dateVal).filter(Boolean);if(!dates.length)return false;if(from&&!dates.some(d=>d>=from))return false;if(to&&!dates.some(d=>d<=to))return false}
   const check=(id,prop)=>{const el=$(id);return !el||!el.value||norm(x[prop]).includes(norm(el.value))};
