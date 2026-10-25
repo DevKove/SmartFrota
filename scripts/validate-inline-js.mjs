@@ -6,6 +6,7 @@ const api = readFileSync('supabase/functions/frotagov-api/index.ts', 'utf8');
 const migration = readFileSync('supabase/migrations/20261023201201_align_api_resource_columns.sql', 'utf8');
 const workOrderMigration = readFileSync('supabase/migrations/20261025170500_generate_work_order_numbers.sql', 'utf8');
 const workOrderCleanupMigration = readFileSync('supabase/migrations/20261025171000_remove_duplicate_work_order_number_trigger.sql', 'utf8');
+const vehicleSecretariaMigration = readFileSync('supabase/migrations/20261025172000_enforce_vehicle_secretaria_match.sql', 'utf8');
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((match) => match[1]);
 
 
@@ -128,6 +129,18 @@ for (const required of [
   "CREATE OR REPLACE FUNCTION public.generate_work_order_number()",
 ]) {
   if (!workOrderCleanupMigration.includes(required)) throw new Error(`Migração de correção de gatilho duplicado de O.S. incompleta: ${required}`);
+}
+
+for (const required of [
+  "CREATE OR REPLACE FUNCTION public.enforce_vehicle_secretaria_match()",
+  "trg_work_orders_vehicle_secretaria_match",
+  "trg_fuel_records_vehicle_secretaria_match",
+  "trg_inspections_vehicle_secretaria_match",
+  "trg_incidents_vehicle_secretaria_match",
+  "trg_maintenance_plans_vehicle_secretaria_match",
+  "NEW.secretaria_id IS DISTINCT FROM v_secretaria_id",
+]) {
+  if (!vehicleSecretariaMigration.includes(required)) throw new Error(`Migração de integridade veículo/secretaria incompleta: ${required}`);
 }
 
 if ((api.match(/if \(!inScope\(profile, current, key\)\)/g) ?? []).length !== 2) {
