@@ -7,6 +7,7 @@ const migration = readFileSync('supabase/migrations/20261023201201_align_api_res
 const workOrderMigration = readFileSync('supabase/migrations/20261025170500_generate_work_order_numbers.sql', 'utf8');
 const workOrderCleanupMigration = readFileSync('supabase/migrations/20261025171000_remove_duplicate_work_order_number_trigger.sql', 'utf8');
 const vehicleSecretariaMigration = readFileSync('supabase/migrations/20261025172000_enforce_vehicle_secretaria_match.sql', 'utf8');
+const vehicleHistoryMigration = readFileSync('supabase/migrations/20261025172500_prevent_vehicle_secretaria_change_with_history.sql', 'utf8');
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((match) => match[1]);
 
 
@@ -136,6 +137,14 @@ for (const required of [
   if (!workOrderCleanupMigration.includes(required)) throw new Error(`Migração de correção de gatilho duplicado de O.S. incompleta: ${required}`);
 }
 
+for (const required of [
+  "CREATE OR REPLACE FUNCTION public.prevent_vehicle_secretaria_change_with_history()",
+  "trg_prevent_vehicle_secretaria_change_with_history",
+  "public.financial_transactions WHERE vehicle_id = OLD.id",
+  "public.vehicle_documents WHERE vehicle_id = OLD.id",
+]) {
+  if (!vehicleHistoryMigration.includes(required)) throw new Error(`Migração de proteção do histórico do veículo incompleta: ${required}`);
+}
 for (const required of [
   "CREATE OR REPLACE FUNCTION public.enforce_vehicle_secretaria_match()",
   "trg_work_orders_vehicle_secretaria_match",
