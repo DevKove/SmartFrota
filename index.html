@@ -1688,12 +1688,25 @@ try{
   const restoringToken=saved.token;
   state.token=restoringToken;
   state.user=saved.user;
-  loadProfile()
+  let restoreTimer;
+  const restoreTimeout=new Promise((resolve,reject)=>{
+   restoreTimer=window.setTimeout(()=>reject(new Error('A restauração da sessão demorou demais. Entre novamente.')),12000);
+  });
+  Promise.race([loadProfile(),restoreTimeout])
    .then(()=>{if(state.token===restoringToken&&sessionStorage.getItem('frotagov-session'))showApp()})
-   .catch(()=>{if(state.token===restoringToken)logout(false)})
-   .finally(()=>finishInitialLoad());
+   .catch(error=>{
+    if(state.token===restoringToken){
+     logout(false);
+     const loginError=$('loginError');
+     if(loginError)loginError.textContent=error?.message||'Não foi possível restaurar sua sessão. Entre novamente.';
+    }
+   })
+   .finally(()=>{if(restoreTimer)clearTimeout(restoreTimer);finishInitialLoad()});
  }
-}catch{}
+}catch(error){
+ const loginError=$('loginError');
+ if(loginError)loginError.textContent='Não foi possível restaurar a sessão. Entre novamente.';
+}
 if(!restoringSession)finishInitialLoad();
 setOnline();
 })();
