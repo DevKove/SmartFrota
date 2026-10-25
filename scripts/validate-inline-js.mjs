@@ -5,6 +5,7 @@ const worker = readFileSync('service-worker.js', 'utf8');
 const api = readFileSync('supabase/functions/frotagov-api/index.ts', 'utf8');
 const migration = readFileSync('supabase/migrations/20261023201201_align_api_resource_columns.sql', 'utf8');
 const workOrderMigration = readFileSync('supabase/migrations/20261025170500_generate_work_order_numbers.sql', 'utf8');
+const workOrderCleanupMigration = readFileSync('supabase/migrations/20261025171000_remove_duplicate_work_order_number_trigger.sql', 'utf8');
 const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((match) => match[1]);
 
 
@@ -118,6 +119,14 @@ for (const required of [
 ]) {
   if (!api.includes(required)) throw new Error(`Verificação obrigatória ausente na API: ${required}`);
 }
+for (const required of [
+  "DROP TRIGGER IF EXISTS trg_assign_work_order_number ON public.work_orders",
+  "DROP FUNCTION IF EXISTS public.assign_work_order_number()",
+  "CREATE OR REPLACE FUNCTION public.generate_work_order_number()",
+]) {
+  if (!workOrderCleanupMigration.includes(required)) throw new Error(`Migração de correção de gatilho duplicado de O.S. incompleta: ${required}`);
+}
+
 if ((api.match(/if \(!inScope\(profile, current, key\)\)/g) ?? []).length !== 2) {
   throw new Error('As operações de edição e exclusão devem validar o escopo com o tipo de recurso.');
 }
